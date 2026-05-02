@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
-using ThirdPartySignOn.Saml.Data;
 
 namespace ThirdPartySignOn.Saml.Data
 {

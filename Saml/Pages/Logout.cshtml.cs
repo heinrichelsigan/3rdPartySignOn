@@ -3,12 +3,11 @@
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using ThirdPartySignOn.Saml.Services;
 using System.Diagnostics;
-using System.Text;
-using Microsoft.AspNetCore.Http.Extensions;
+using ThirdPartySignOn.Saml.Services;
 
 namespace ThirdPartySignOn.Saml.Pages;
 

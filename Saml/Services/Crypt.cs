@@ -187,12 +187,12 @@ namespace ThirdPartySignOn.Saml.Services
     public class DES3
     {
         static string SecretKey =>
-#if DEBUG
-            Convert.ToBase64String(Encoding.UTF8.GetBytes(
+#if STATIC_KEYS
+               "AMDAMDES_ene_Male_Pumperness";        
+#else
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(
                 (!string.IsNullOrEmpty(SettingsKeyReader.HostDomainName) ?
                     SettingsKeyReader.HostDomainName : Environment.MachineName))).Substring(0, 16);
-#else
-            "AMDAMDES_ene_Male_Pumperness";
 #endif
 
         #region properties
@@ -385,11 +385,11 @@ namespace ThirdPartySignOn.Saml.Services
     {
 
         static string SecretKey => Convert.ToBase64String(Encoding.UTF8.GetBytes(
-#if DEBUG                      
-                !string.IsNullOrEmpty(SettingsKeyReader.HostDomainName) ?
-                    SettingsKeyReader.HostDomainName : Environment.MachineName
+#if STATIC_KEYS
+                "AM DAM DES, ene Male press, ene Male PumperNess"                
 #else
-        "AM DAM DES, ene Male press, ene Male PumperNess"
+            !string.IsNullOrEmpty(SettingsKeyReader.HostDomainName) ?
+                    SettingsKeyReader.HostDomainName : Environment.MachineName
 #endif
         ));
 

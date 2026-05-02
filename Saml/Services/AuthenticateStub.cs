@@ -16,26 +16,7 @@ namespace ThirdPartySignOn.Saml.Services
         public List<SamlClaimReduced> claimsList = new List<SamlClaimReduced>();
         public string UserName = "";
 
-        /// <summary>
-        /// Authenticate the user and get the username from the name identifier claim. This method is intended for testing purposes only and should not be used in production.
-        /// </summary>
-        /// <param name="authStateProvider"></param>
-        /// <returns>Auth status message</returns>
-        public async Task<string> Authenticate(AuthenticationStateProvider authStateProvider)
-        {
-            var authState = await authStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
 
-            if (user.Identity is not null && user.Identity.IsAuthenticated)
-            {
-                UserName = await GetLoginNameIdentifier(authStateProvider);
-                return $"{UserName} is authenticated.";
-            }
-            else
-            {
-                return "The user is NOT authenticated.";
-            }
-        }
 
 
         /// <summary>
@@ -140,7 +121,7 @@ namespace ThirdPartySignOn.Saml.Services
         }
 
 
-        [Obsolete("This method is a stub and should not be used in production. It is intended for testing purposes only.")]
+        [Obsolete("This method is a stub and should not be used in production. It is intended for testing purposes only.", true)]
         public async Task<string> Logout(AuthenticationStateProvider authStateProvider)
         {
             var authState = await authStateProvider.GetAuthenticationStateAsync();
@@ -184,6 +165,28 @@ namespace ThirdPartySignOn.Saml.Services
             return logoutMsg;
         }
 
+
+        /// <summary>
+        /// Authenticate the user and get the username from the name identifier claim. This method is intended for testing purposes only and should not be used in production.
+        /// </summary>
+        /// <param name="authStateProvider"></param>
+        /// <returns>Auth status message</returns>
+        [Obsolete("This method is a stub and should not be used in production. It is intended for testing purposes only.", true)]
+        public async Task<string> Authenticate(AuthenticationStateProvider authStateProvider)
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                UserName = await GetLoginNameIdentifier(authStateProvider);
+                return $"{UserName} is authenticated.";
+            }
+            else
+            {
+                return "The user is NOT authenticated.";
+            }
+        }
 
         #endregion Saml2 authentication and saml2 claims
 

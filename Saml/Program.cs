@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
-using ThirdPartySignOn.Saml.Data;
-using ThirdPartySignOn.Saml.Services;
 using Sustainsys.Saml2;
 using Sustainsys.Saml2.Metadata;
 using Sustainsys.Saml2.WebSso;
+using ThirdPartySignOn.Saml.Data;
+using ThirdPartySignOn.Saml.Services;
 
 namespace ThirdPartySignOn.Saml
 {

@@ -1,0 +1,50 @@
+﻿@using ThirdPartySignOn.Saml.Data
+@using ThirdPartySignOn.Saml.Services
+@using System.Security.Claims
+@using Microsoft.Extensions.DependencyInjection
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inherits OwningComponentBase
+<AuthorizeView>
+    <Authorized>
+        Hello, @username! <a href="Logout?usercrypt=@usercrypt">Logout</a>
+    </Authorized>
+    <NotAuthorized>
+        You're not authorized! <a href="@navigateUrl">Login</a>
+        <button class="btn-primary" @onclick="@(async () => await LoginClick())">LoginClick</button>
+    </NotAuthorized>
+</AuthorizeView>
+@code {
+    public AuthenticateStub? AuthenticateStub { get; set; }
+    public string returnUrl = "", navigateUrl = "";
+    public string username = "", usercrypt = "";
+
+    protected override async Task OnInitializedAsync()
+    {       
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        if (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false)
+            username = ClaimsPrincipal.Current?.Identity?.Name ?? string.Empty;
+        if (string.IsNullOrEmpty(username))
+            username = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+         
+        ThirdPartySignOnLog.LogStatic("UserName initialized: " + username);
+        usercrypt = username.EnCrypt();
+        ThirdPartySignOnLog.LogStatic("UserName encrypted: " + usercrypt);
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        string rawUrl = uri.ToString();
+       
+        // var authResult = await Microsoft.AspNetCore.Mvc..PageModel.HttpContext.AuthenticateAsync();
+        returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        navigateUrl = "login?redirectUri=" + returnUrl;
+        
+    }
+
+    async Task LoginClick()
+    {
+        await Task.Yield(); // Ensure this runs asynchronously to avoid blocking the UI thread
+        NavigationManager.NavigateTo($"login?redirectUri={returnUrl}", forceLoad: true);
+    }
+
+}
+
+

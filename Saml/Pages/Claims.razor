@@ -1,0 +1,92 @@
+﻿@page "/Claims"
+@using System.Security.Claims
+@using ThirdPartySignOn.Saml.Data
+@using ThirdPartySignOn.Saml.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inherits OwningComponentBase
+
+<PageTitle>Claims</PageTitle>
+<h1>Claims</h1>
+
+<h2>Saml UserInfo</h2>
+
+<p role="alertdialog" style="visibility: visible; display: block; padding: 2px; margin: 2px; border-block: dashed;">
+    NameIdentifier: <label>@samlUser.NameIdentifier</label>
+    <br />
+    SessionIndex: <span style="font-family: monospace">@samlUser.SessionIndex</span>
+    <br />
+    AuthenticationDate @samlUser.AuthenticationInstant
+    <br />
+    AuthenticatioMethod: @samlUser.AuthenticatioMethod
+    <br />
+    LogoutNameIdentifier: @samlUser.LogoutNameIdentifier
+    <br />
+    Login User: <span style="font-family: monospace">@loginName</span>
+    <br />
+    Encrypted User: <label>@encryptedUser</label>
+</p>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Saml Claims</h2>
+    </div>
+    <div class="card-body">
+        <table border="0" cellpadding="0" cellspacing="0">                    
+            @foreach (var claimsKey in samlUser.ClaimsDictionary.Keys)
+            {
+                <tr>
+                    <td>@claimsKey</td>
+                    <td>@samlUser.ClaimsDictionary[@claimsKey]</td>
+                </tr>
+            }            
+        </table>
+    </div>
+    
+        @foreach (var rclaim in claimsList)
+        {
+            <!--
+                <pre>
+                    @rclaim.ClaimIssuer
+                    @rclaim.ClaimSchema
+                    @rclaim.ClaimType>
+                    @rclaim.ClaimValue
+                </pre>
+            -->
+        }    
+</div>
+
+@code {
+    private AuthenticateStub? AuthenticateStub { get; set; }
+    public string loginName = "", encryptedUser = "";
+    public List<SamlClaimReduced> claimsList = new List<SamlClaimReduced>();
+    public SamlUserInfoReduced samlUser = new SamlUserInfoReduced();
+
+    /// <summary>
+    /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
+    /// It is used to perform any asynchronous initialization tasks that are required for the component to function properly.
+    /// This method is called after the component has been instantiated and its parameters have been set,
+    /// but before the component is rendered for the first time.
+    ///
+    /// AuthenticateStub is used to get the login name identifier and the saml2 claims from the authentication state provider, which is injected into the component.
+    /// loginName is the login name identifier, which is encrypted with a simple reversible encryption method and stored in encryptedUser.
+    /// saml2User is a reduced version of the saml2 user info, which contains only the most important claims, and is stored in saml2User.
+    /// 
+    /// </summary>
+    /// <returns>void Task</returns>
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+
+        loginName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        encryptedUser = Crypt.Encrypt(loginName);
+
+        claimsList = await AuthenticateStub.GetAuthClaims(AuthenticationStateProvider);
+        samlUser = (claimsList != null && claimsList.Count > 0) ? new SamlUserInfoReduced(claimsList) :
+            await AuthenticateStub.GetSamlUserInfoReduced(AuthenticationStateProvider);
+    }
+
+ }

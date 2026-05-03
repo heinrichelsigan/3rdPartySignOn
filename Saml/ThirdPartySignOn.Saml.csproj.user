@@ -2,7 +2,7 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ActiveDebugProfile>https</ActiveDebugProfile>
-    <NameOfLastUsedPublishProfile>S:\3rdPartySignOn\Saml2\Properties\PublishProfiles\ThirdPartySignOn.Saml2_Portable.pubxml</NameOfLastUsedPublishProfile>
+    <NameOfLastUsedPublishProfile>S:\3rdPartySignOn\Saml\Properties\PublishProfiles\ThirdPartySignOn.Saml2_Publish_x64.pubxml</NameOfLastUsedPublishProfile>
     <Controller_SelectedScaffolderID>MvcControllerWithActionsScaffolder</Controller_SelectedScaffolderID>
     <Controller_SelectedScaffolderCategoryPath>root/Common/MVC/Controller</Controller_SelectedScaffolderCategoryPath>
     <IsLinterEnabled>True</IsLinterEnabled>

@@ -1,0 +1,1 @@
+﻿## ThirdPartySignOn.MSIdentity.Log Directory

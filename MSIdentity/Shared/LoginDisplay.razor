@@ -1,10 +1,52 @@
-﻿@namespace ThirdPartySignOn.MSIdentity.Shared
+﻿@using ThirdPartySignOn.MSIdentity.Data
+@using System.Security.Claims
+@using Microsoft.Extensions.DependencyInjection
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticateStub AuthenticateStub
+@inherits OwningComponentBase
 <AuthorizeView>
     <Authorized>
-        Hello, @context.User.Identity?.Name!
-        <a href="ThirdPartySignOn.MSIdentity/Account/SignOut">Log out</a>
+        Hello, @username! <a href="Logout?user=@username">Logout</a>
     </Authorized>
     <NotAuthorized>
-        <a href="ThirdPartySignOn.MSIdentity/Account/SignIn">Log in</a>
+        You're not authorized! <a href="@navigateUrl">Login</a>
+        <button class="btn-primary" @onclick="@(async () => await LoginClick())">LoginClick</button>
     </NotAuthorized>
 </AuthorizeView>
+@code {
+    public AuthenticateStub? AuthenticationStub { get; set; }
+    public string returnUrl = "", navigateUrl = "";
+    public string username = "", usercrypt = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        string[] userNames = [];
+        AuthenticationStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        if (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false)
+            username = ClaimsPrincipal.Current?.Identity?.Name ?? string.Empty;
+        userNames = await AuthenticationStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        username = (userNames != null && userNames.Length > 0 && !String.IsNullOrEmpty(userNames[0])) 
+                        ? userNames[0] : username;
+
+        ThirdPartySignOnLog.LogStatic("UserName initialized: " + username);
+        usercrypt = username.EnCrypt();
+        ThirdPartySignOnLog.LogStatic("UserName encrypted: " + usercrypt);
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        string rawUrl = uri.ToString();
+       
+        // var authResult = await Microsoft.AspNetCore.Mvc..PageModel.HttpContext.AuthenticateAsync();
+        returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        navigateUrl = "login?redirectUri=" + returnUrl;
+        
+    }
+
+    async Task LoginClick()
+    {
+        await Task.Yield(); // Ensure this runs asynchronously to avoid blocking the UI thread
+        NavigationManager.NavigateTo($"login?redirectUri={returnUrl}", forceLoad: true);
+    }
+
+}
+
+

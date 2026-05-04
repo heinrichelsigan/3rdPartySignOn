@@ -3,8 +3,7 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "https://test.cqrxs.eu/ThirdPartySignOn/MSIdentity;http://localhost:5258",
-      "sslPort": 44313
+      "applicationUrl": "https://test.cqrxs.eu/SingleSignOn/MSIdentity"
     }
   },
   "profiles": {
@@ -12,7 +11,7 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://test.cqrxs.eu/ThirdPartySignOn/MSIdentity;https://localhost:7025;http://localhost:5297"
+      "applicationUrl": "https://test.cqrxs.eu/SingleSignOn/MSIdentity"
     },
     "IIS Express": {
       "commandName": "IISExpress",

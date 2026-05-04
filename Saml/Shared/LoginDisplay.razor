@@ -3,6 +3,7 @@
 @using System.Security.Claims
 @using Microsoft.Extensions.DependencyInjection
 @inject NavigationManager NavigationManager
+@inject AuthenticateStub AuthenticateStub
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inherits OwningComponentBase
 <AuthorizeView>
@@ -15,17 +16,17 @@
     </NotAuthorized>
 </AuthorizeView>
 @code {
-    public AuthenticateStub? AuthenticateStub { get; set; }
+    public AuthenticateStub? AuthenticationStub { get; set; }
     public string returnUrl = "", navigateUrl = "";
     public string username = "", usercrypt = "";
 
     protected override async Task OnInitializedAsync()
     {       
-        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        AuthenticationStub = ScopedServices.GetRequiredService<AuthenticateStub>();
         if (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false)
             username = ClaimsPrincipal.Current?.Identity?.Name ?? string.Empty;
         if (string.IsNullOrEmpty(username))
-            username = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+            username = await AuthenticationStub.GetLoginNameIdentifier(AuthenticationStateProvider);
          
         ThirdPartySignOnLog.LogStatic("UserName initialized: " + username);
         usercrypt = username.EnCrypt();

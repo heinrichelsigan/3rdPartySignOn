@@ -58,3 +58,5 @@ nunit-*.xml
 /Saml/.vs
 /MSIdentity/.vs/MSIdentity
 /MSIdentity/.config
+/.vs
+/MSIdentity/.vs

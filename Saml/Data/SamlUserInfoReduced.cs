@@ -58,7 +58,10 @@ namespace ThirdPartySignOn.Saml.Data
                         continue;
 
                     SamlClaimReduced rClaim = new SamlClaimReduced(sclaim); // get reduced claim
-                    ClaimsDictionary.Add(rClaim.ClaimType, rClaim.ClaimValue); // add claim type / value to dictionary
+                    if (ClaimsDictionary.ContainsKey(rClaim.ClaimType))
+                        ClaimsDictionary[rClaim.ClaimType] = rClaim.ClaimValue;
+                    else 
+                        ClaimsDictionary.Add(rClaim.ClaimType, rClaim.ClaimValue); // add claim type / value to dictionary
 
                     if (rClaim.ClaimType.Contains("nameidentifier")) // get name identifier claim value
                         NameIdentifier = rClaim.ClaimValue;
@@ -92,7 +95,10 @@ namespace ThirdPartySignOn.Saml.Data
                 foreach (SamlClaimReduced sclaim in claimsList)
                 {
                     SamlClaimReduced rClaim = new SamlClaimReduced(sclaim ?? SamlClaimReduced.EmptyClaim); // get reduced claim
-                    ClaimsDictionary.Add(rClaim.ClaimType, rClaim.ClaimValue); // add claim type / value to dictionary
+                    if (ClaimsDictionary.ContainsKey(rClaim.ClaimType))
+                        ClaimsDictionary[rClaim.ClaimType] = rClaim.ClaimValue;
+                    else
+                        ClaimsDictionary.Add(rClaim.ClaimType, rClaim.ClaimValue); // add claim type / value to dictionary
 
                     if (rClaim.ClaimType.Contains("nameidentifier")) // get name identifier claim value
                         NameIdentifier = rClaim.ClaimValue;

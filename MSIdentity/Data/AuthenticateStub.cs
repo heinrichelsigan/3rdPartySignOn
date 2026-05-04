@@ -4,15 +4,23 @@ using System.Security.Claims;
 
 namespace ThirdPartySignOn.MSIdentity.Data
 {
+
+    /// <summary>
+    /// AuthenticateStub is service to get username and claims
+    /// </summary>
     public class AuthenticateStub
     {
-        public List<System.Security.Claims.Claim> ClaimsList { get; private set; }
-        public string UserName { get; private set; }
+        public static List<System.Security.Claims.Claim> ClaimsList { get; private set; }
+        public static List<string> LoginNames { get; private set; }
+        public static string UserName { get; private set; }
+        public static string RealName { get; private set; }
 
-        public AuthenticateStub()
+        static AuthenticateStub()
         {
-            ClaimsList = new List<System.Security.Claims.Claim>();
+            RealName = "";
             UserName = "";
+            LoginNames = new List<string>();
+            ClaimsList = new List<System.Security.Claims.Claim>();
         }
 
         /// <summary>
@@ -24,28 +32,44 @@ namespace ThirdPartySignOn.MSIdentity.Data
         {
             var authState = await authStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
-            List<string> loginNameList = new List<string>();
-
+            if (LoginNames == null || LoginNames.Count == 0) 
+                LoginNames = new List<string>();
+            
             if (user.Identity is not null && user.Identity.IsAuthenticated)
             {
-                UserName = user.Identity.Name ?? "";                
-                loginNameList.Add(UserName);
-                loginNameList.Add(user.GetDisplayName() ?? "[no display naame]");
+                UserName = user.Identity.Name ?? "";
+                if (!string.IsNullOrEmpty(UserName) && !LoginNames.Contains(UserName))
+                    LoginNames.Add(UserName);
+                string displayName = user.GetDisplayName() ?? "[no display naame]";
+                if (!LoginNames.Contains(displayName))
+                    LoginNames.Add(displayName);
 
-                ClaimsList = (((ClaimsIdentity)user.Identity).Claims).ToList<System.Security.Claims.Claim>();
-                foreach (var claim in ClaimsList)
+                if (ClaimsList == null || ClaimsList.Count == 0)
+                    ClaimsList = new List<Claim>();
+                else
+                    ClaimsList.Clear();
+
+                foreach (var claim in (((ClaimsIdentity)user.Identity).Claims).ToList<System.Security.Claims.Claim>())
                 {
-                    
-                    if (claim != null && claim.Type != null && claim.Type.Contains("nameidentifier"))
+                    if (claim != null)
                     {
-                        loginNameList.Add(claim.Value);
-                        break;
+                        ClaimsList.Add(claim);
+                        if (claim.Type != null && claim.Type.EndsWith("username") && !string.IsNullOrEmpty(claim.Value))
+                        {
+                            UserName = claim.Value;
+                            if (!LoginNames.Contains(claim.Value))
+                                LoginNames.Insert(0, claim.Value);
+                        }
+                        if (claim.Type != null && claim.Type.Equals("name", StringComparison.OrdinalIgnoreCase))
+                        {
+                            RealName = claim.Value;
+                        }
                     }
-                }
-                return loginNameList.ToArray(); ;
+                }               
             }
-
-            return [];
+            
+            return LoginNames.ToArray(); 
         }
+
     }
 }

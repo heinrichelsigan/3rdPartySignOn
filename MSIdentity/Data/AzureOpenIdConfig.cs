@@ -1,4 +1,7 @@
-﻿namespace ThirdPartySignOn.MSIdentity.Data
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+namespace ThirdPartySignOn.MSIdentity.Data
 {
 
     /// <summary>
@@ -23,9 +26,44 @@
         {
             Instance = "https://login.microsoftonline.com/";
             Domain = "heinrichelsiganlive355.onmicrosoft.com";
-            TenantId = "d661f4ad-5daa-4767-b740-084d20d8365f"; 
+            TenantId = "d661f4ad-5daa-4767-b740-084d20d8365f";
             ClientId = "65eb80ed-ba91-464a-b10e-87ff8a349f32";
             CallbackPath = "/signin-oidc";
+        }
+
+        public AzureOpenIdConfig(string jsonSectionName) : this()
+        {
+            if (string.IsNullOrEmpty(jsonSectionName))
+                jsonSectionName = "AzureAd";
+            AzureOpenIdConfig? currentConfig = GetJsonSettingsAzureOpenId(jsonSectionName);
+            if (currentConfig != null)
+            {
+                Instance = currentConfig.Instance;
+                Domain = currentConfig.Domain;
+                TenantId = currentConfig.TenantId;
+                ClientId = currentConfig.ClientId;
+                CallbackPath = currentConfig.CallbackPath;
+            }
+        }
+
+
+        public static AzureOpenIdConfig? GetJsonSettingsAzureOpenId(string configSection = "AzureAd")
+        {
+            AzureOpenIdConfig? azureOpenIdConfig = null;
+            string configPath = Path.Combine(SettingsKeyReader.BaseAppPath, "appsettings.json");
+            if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
+            {
+                string jsonSerialized = File.ReadAllText(configPath);
+                if (!string.IsNullOrEmpty(jsonSerialized))
+                {
+                    string jsonConfigSection = configSection.Replace(":", ".");
+                    JObject? jobj = (JObject?)JsonConvert.DeserializeObject(jsonSerialized);
+                    JToken? jtok = (JToken?)jobj?.SelectToken(jsonConfigSection);
+                    string restTokenString = (jtok ?? "").ToString();
+                    azureOpenIdConfig = JsonConvert.DeserializeObject<AzureOpenIdConfig>(restTokenString);
+                }
+            }
+            return azureOpenIdConfig;
         }
 
     }

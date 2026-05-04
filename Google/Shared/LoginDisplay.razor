@@ -1,0 +1,71 @@
+﻿@using ThirdPartySignOn.Google.Data
+@using System.Security.Claims
+@using Microsoft.Extensions.DependencyInjection
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticateStub AuthenticateStub
+@inject GoogleConnectService GoogleConnectService 
+@inherits OwningComponentBase
+<AuthorizeView>
+    <Authorized>
+        Hello, @username! <a href="@logoutUrl">Logout</a>
+    </Authorized>
+    <NotAuthorized>
+        You're not authorized! <a href="@navigateUrl">Login</a>
+        <button class="btn-primary" @onclick="@(async () => await LoginClick())">LoginClick</button>
+    </NotAuthorized>
+</AuthorizeView>
+@code {
+    public AuthenticateStub? AuthenticationStub { get; set; }
+    public string returnUrl = "", navigateUrl = "", logoutUrl = "logout";
+    public string username = "", usercrypt = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        string[] userNames = [];
+        ClaimsPrincipal? aser;
+        await base.OnInitializedAsync();
+
+        AuthenticationStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        try
+        {
+            // Set the user to determine if they are logged in
+            var auths = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (auths != null)
+            {
+                aser = auths.User;
+                username = aser?.Identity?.Name ?? string.Empty;
+            }
+        }
+        catch
+        {
+        }
+        if (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false)
+            username = ClaimsPrincipal.Current?.Identity?.Name ?? string.Empty;
+        userNames = await AuthenticationStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        username = (userNames != null && userNames.Length > 0 && !String.IsNullOrEmpty(userNames[0]))
+                        ? userNames[0] : username;
+        logoutUrl = (string.IsNullOrEmpty(username)) ? "Logout" : $"Logout?user={username}";
+
+        ThirdPartySignOnLog.LogStatic("UserName initialized: " + username);
+        usercrypt = (!string.IsNullOrEmpty(username)) ? username.EnCrypt() : "";
+
+            ThirdPartySignOnLog.LogStatic("UserName encrypted: " + usercrypt);
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        string rawUrl = uri.ToString();
+       
+        // var authResult = await Microsoft.AspNetCore.Mvc..PageModel.HttpContext.AuthenticateAsync();
+        returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        navigateUrl = "login?redirectUri=" + returnUrl;
+        
+    }
+
+    async Task LoginClick()
+    {
+        await Task.Yield(); // Ensure this runs asynchronously to avoid blocking the UI thread
+        NavigationManager.NavigateTo($"signin-oidc?redirectUri={returnUrl}", forceLoad: true);
+    }
+
+}
+
+

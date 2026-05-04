@@ -21,6 +21,13 @@ namespace ThirdPartySignOn.MSIdentity.Data
                 if (string.IsNullOrEmpty(_baseAppPath))
                 {
                     _baseAppPath = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                    if (!string.IsNullOrEmpty(_baseAppPath) && Directory.Exists(_baseAppPath))
+                    {
+                        if (_baseAppPath.EndsWith(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                            _baseAppPath = _baseAppPath.Substring(0, _baseAppPath.Length - 5);
+                        if (_baseAppPath.EndsWith(Path.DirectorySeparatorChar + "bin", StringComparison.OrdinalIgnoreCase))
+                            _baseAppPath = _baseAppPath.Substring(0, _baseAppPath.Length - 4);
+                    }
                 }
                 return _baseAppPath;
             }
@@ -31,6 +38,8 @@ namespace ThirdPartySignOn.MSIdentity.Data
             get
             {
                 string logFilePath = GetKeySetting("LogFilePath");
+                if (string.IsNullOrEmpty(logFilePath))
+                    logFilePath = Path.Combine(BaseAppPath, "Log");
                 if (!logFilePath.EndsWith(Path.DirectorySeparatorChar))
                     logFilePath += Path.DirectorySeparatorChar.ToString();
                 
@@ -74,24 +83,8 @@ namespace ThirdPartySignOn.MSIdentity.Data
         /// </summary>
         /// <param name="configSection">config section name of saml2 section</param>
         /// <returns><see cref="AzureOpenIdConfig"/></returns>
-        public static AzureOpenIdConfig? GetJsonSettingsAzureOpenId(string configSection = "AzureAd")
-        {
-            AzureOpenIdConfig? azureOpenIdConfig = null;
-            string configPath = Path.Combine(BaseAppPath, "appsettings.json");
-            if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
-            {
-                string jsonSerialized = File.ReadAllText(configPath);
-                if (!string.IsNullOrEmpty(jsonSerialized))
-                {
-                    string jsonConfigSection = configSection.Replace(":", ".");
-                    JObject? jobj = (JObject?)JsonConvert.DeserializeObject(jsonSerialized);
-                    JToken? jtok = (JToken?)jobj?.SelectToken(jsonConfigSection);
-                    string restTokenString = (jtok ?? "").ToString();
-                    azureOpenIdConfig = JsonConvert.DeserializeObject<AzureOpenIdConfig>(restTokenString);
-                }
-            }
-            return azureOpenIdConfig;
-        }
+        public static AzureOpenIdConfig? GetJsonSettingsAzureOpenId(string configSection = "AzureAd") => 
+            AzureOpenIdConfig.GetJsonSettingsAzureOpenId(configSection);
 
         public static string GetKeyValueJson(string keyPath)
         {

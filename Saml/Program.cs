@@ -11,12 +11,12 @@ namespace ThirdPartySignOn.Saml
     public class Program
     {
 
-        public const string AppName = "ThirdPartySignOn.Saml";
+        public const string AppName = "SSO.Saml";
 
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            SamlIdentConfig? saml2 = SettingsKeyReader.GetJsonSettingsSectionSaml2("Saml2");
+            SamlIdentConfig? saml2 = new SamlIdentConfig("Saml2");
             string application_name = SettingsKeyReader.ApplicationName;
             string cookie_name = SettingsKeyReader.GetKeySetting("Saml2CookieName");
             string domain_name = SettingsKeyReader.GetKeySetting("DomainName");

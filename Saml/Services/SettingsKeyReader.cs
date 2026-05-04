@@ -13,14 +13,28 @@ namespace ThirdPartySignOn.Saml.Services
         
         #region static pre settings
 
+        private static readonly Lock _lock = new Lock();
         private static string _baseAppPath = "";
         public static string BaseAppPath
         {
             get
             {
-                if (string.IsNullOrEmpty(_baseAppPath))
+                lock (_lock)
                 {
-                    _baseAppPath = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                    if (string.IsNullOrEmpty(_baseAppPath))
+                    {
+                        _baseAppPath = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                        if (!string.IsNullOrEmpty(_baseAppPath) && Directory.Exists(_baseAppPath))
+                        {
+                            if (_baseAppPath.Contains(Path.DirectorySeparatorChar + "bin", StringComparison.OrdinalIgnoreCase))
+                            {
+                                int idx = _baseAppPath.IndexOf(Path.DirectorySeparatorChar + "bin");
+                                string bpath = _baseAppPath.Substring(0, idx);
+                                if (!string.IsNullOrEmpty(bpath) && Directory.Exists(bpath))
+                                    _baseAppPath = bpath;
+                            }
+                        }
+                    }
                 }
                 return _baseAppPath;
             }
@@ -77,7 +91,7 @@ namespace ThirdPartySignOn.Saml.Services
         public static SamlIdentConfig? GetJsonSettingsSectionSaml2(string configSection)
         {
             SamlIdentConfig? saml2IdentConf = null;
-            string configPath = Path.Combine(BaseAppPath, "appsettings.json");
+            string configPath = Path.Combine(SettingsKeyReader.BaseAppPath, "appsettings.json");
             if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
             {
                 string jsonSerialized = File.ReadAllText(configPath);

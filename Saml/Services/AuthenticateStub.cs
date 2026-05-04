@@ -16,9 +16,6 @@ namespace ThirdPartySignOn.Saml.Services
         public List<SamlClaimReduced> claimsList = new List<SamlClaimReduced>();
         public string UserName = "";
 
-
-
-
         /// <summary>
         /// GetLoginNameIdentifier gets the username from the name identifier claim. This method is intended for testing purposes only and should not be used in production.
         /// </summary>
@@ -31,6 +28,7 @@ namespace ThirdPartySignOn.Saml.Services
 
             if (user.Identity is not null && user.Identity.IsAuthenticated)
             {
+                UserName = user.Identity.Name ?? "";
                 foreach (var claim in ((ClaimsIdentity)user.Identity).Claims)
                 {
                     SamlClaimReduced rClaim = new SamlClaimReduced(claim);
@@ -98,7 +96,10 @@ namespace ThirdPartySignOn.Saml.Services
                         continue;
 
                     SamlClaimReduced rClaim = new SamlClaimReduced(sclaim); // get reduced claim
-                    saml2User.ClaimsDictionary.Add(rClaim.ClaimType, rClaim.ClaimValue); // add claim type / value to dictionary
+                    if (saml2User.ClaimsDictionary.ContainsKey(rClaim.ClaimType))
+                        saml2User.ClaimsDictionary[rClaim.ClaimType] = rClaim.ClaimValue;
+                    else 
+                        saml2User.ClaimsDictionary.Add(rClaim.ClaimType, rClaim.ClaimValue); // add claim type / value to dictionary
 
                     if (rClaim.ClaimType.Contains("nameidentifier")) // get name identifier claim value
                         saml2User.NameIdentifier = rClaim.ClaimValue;
@@ -118,74 +119,6 @@ namespace ThirdPartySignOn.Saml.Services
             }
 
             return saml2User;
-        }
-
-
-        [Obsolete("This method is a stub and should not be used in production. It is intended for testing purposes only.", true)]
-        public async Task<string> Logout(AuthenticationStateProvider authStateProvider)
-        {
-            var authState = await authStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            string logoutMsg = "";
-            bool logoutPerformed = false;
-
-            if (user.Identity is not null && user.Identity.IsAuthenticated)
-            {
-                try
-                {
-                    logoutMsg = $"{UserName} will be logged out.";                    
-                    // var outH = await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                    UserName = "";
-                    logoutPerformed = true;
-                }
-                catch (Exception ex)
-                {
-                    logoutMsg = $"Logout failed: {ex.Message}";
-                    UserName = "";
-                    logoutPerformed = false;
-                }
-            }
-
-            try
-            {
-                user = null;
-                authState = null;
-                UserName = "";
-            }
-            catch
-            {
-                logoutMsg += "\t.com Exxception, when setting authState = null";
-            }
-
-            if (string.IsNullOrEmpty(logoutMsg) && logoutPerformed)
-            {
-                logoutMsg = "Logout successful.";
-            }
-
-            return logoutMsg;
-        }
-
-
-        /// <summary>
-        /// Authenticate the user and get the username from the name identifier claim. This method is intended for testing purposes only and should not be used in production.
-        /// </summary>
-        /// <param name="authStateProvider"></param>
-        /// <returns>Auth status message</returns>
-        [Obsolete("This method is a stub and should not be used in production. It is intended for testing purposes only.", true)]
-        public async Task<string> Authenticate(AuthenticationStateProvider authStateProvider)
-        {
-            var authState = await authStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity is not null && user.Identity.IsAuthenticated)
-            {
-                UserName = await GetLoginNameIdentifier(authStateProvider);
-                return $"{UserName} is authenticated.";
-            }
-            else
-            {
-                return "The user is NOT authenticated.";
-            }
         }
 
         #endregion Saml2 authentication and saml2 claims

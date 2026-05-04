@@ -1,0 +1,141 @@
+﻿@using static ThirdPartySignOn.Google.Program
+@using ThirdPartySignOn.Google.Data
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@using System.Reflection
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticateStub AuthenticateStub
+@inherits OwningComponentBase
+@page "/"
+
+<PageTitle>@appName</PageTitle>
+
+<h1>@appName</h1>
+
+Welcome to @appName,
+<br />
+click on <NavLink class="nav-fill" href="Index">Index</NavLink> to view main index site (this).
+<br />
+click on <NavLink class="nav-item" href="UserClaims">UserClaims</NavLink> to see user claims.
+<br />
+click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName to logout.
+<br />
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+
+<p role="alertdialog" style="visibility: @visibility_value; display: @display_value; padding: 2 2 2 2; margin: 2 2 2 2; border-block: dashed;">
+    RealName: <label>@realName</label>
+    <br />
+    UserName: <label>@userName</label>
+    <br />
+    Encrypted User: <label>@encryptedSamlUser</label>
+    <br />
+    NavigateUrl: <a href="@navigateUrl" target="_self">@navigateUrl</a>
+    <br />
+    LogoutUrl:  <a href="@logoutHref" target="_self">@logoutHref</a>
+    <br />
+    About @AssemblyTitle
+    <br />
+    Version @AssemblyVersion
+    <br />
+    &copy; @AssemblyCopyright
+    <br />
+    @AssemblyDescription   
+</p>
+<br />
+
+@code {
+    public AuthenticateStub? Authentication { get; set; }
+    public string returnUrl = "", navigateUrl = "", rawUrl = "";
+    public string visibility_value = "hidden", display_value = "none";
+    public string appName = Program.appName, logoutHref = "Logout?user=";
+    public string userName = "", encryptedSamlUser = "", realName = "";
+
+    /// <summary>
+    /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
+    /// It is used to perform any asynchronous initialization tasks that are required for the component to function properly.
+    /// This method is called after the component has been instantiated and its parameters have been set,
+    /// but before the component is rendered for the first time.
+    ///
+    /// rawUrl is the absolute url of the current page, including the query string.
+    /// AuthenticateStub is used to get the login name identifier and the saml2 claims from the authentication state provider, which is injected into the component.
+    /// userName is the login name identifier, which is encrypted with a simple reversible encryption method and stored in encryptedSam2lUser.
+    /// formsTicket is the forms authentication ticket, which is received via the saml2 soap client using the login name identifier.
+    ///
+    /// </summary>
+    /// <returns>blank <see cref="Task"/></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        rawUrl = uri.ToString();
+        returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        navigateUrl = SettingsKeyReader.GoogleRedirectUrl;
+
+        appName = SettingsKeyReader.ApplicationName;
+        string[] userNames = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        if (userNames != null && userNames.Length > 0)
+        {
+            for (int ui = 0; ui < userNames.Length; ui++) 
+            {
+                if (!string.IsNullOrEmpty(userNames[ui]))
+                {
+                    userName = userNames[ui];
+                    break;
+                }
+            }
+        }
+        if (string.IsNullOrEmpty(userName) && (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false))
+            userName = ClaimsPrincipal.Current?.Identity?.Name ?? "";
+
+        realName = AuthenticateStub.RealName;
+        encryptedSamlUser = (string.IsNullOrEmpty(userName)) ? "" : userName.EnCrypt();
+        logoutHref = "Logout?user=" + userName;
+
+        visibility_value = "visible";
+        display_value = "block";
+    }
+
+   
+    #region Assembly Attribute Accessors
+
+    public string AssemblyTitle
+    {
+        get
+        {
+            object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false);
+            string assTitle = (attributes.Length > 0 && !string.IsNullOrEmpty(((AssemblyTitleAttribute)attributes[0]).Title)) ?
+                ((AssemblyTitleAttribute)attributes[0]).Title :
+                System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetAssembly(typeof(Index)).Location);
+            return assTitle;
+        }
+    }
+
+    public string AssemblyVersion { get => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0"; }
+
+    public string AssemblyDescription
+    {
+        get
+        {
+            object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyDescriptionAttribute), false);
+            return (attributes.Length == 0) ? "" : ((AssemblyDescriptionAttribute)attributes[0]).Description;
+        }
+    }
+
+    public string AssemblyCopyright
+    {
+        get
+        {
+            object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
+            return (attributes.Length == 0) ? "" : ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
+        }
+    }
+
+    #endregion
+
+}

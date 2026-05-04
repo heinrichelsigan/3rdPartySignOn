@@ -22,8 +22,6 @@ click on <NavLink class="nav-fill" href="Index">Claims</NavLink> to view main in
 <br />
 click on <NavLink class="nav-fill" href="Claims">Claims</NavLink> to view your saml claims.
 <br />
-click on <NavLink class="nav-item" href="Error">Error</NavLink> to see error page.
-<br />
 click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName to logout.
 <br />
 
@@ -40,7 +38,7 @@ click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName
     <br />
     Encrypted Saml User: <label>@encryptedSamlUser</label>
     <br />
-    NavigateUrl: <a href="@navigateUrl" target="_self" style="visibility: @visibility_value; display: @display_value">@navigateUrl</a>
+    NavigateUrl: <a href="@navigateUrl" target="_self">@navigateUrl</a>
 </p>
 <br />
 
@@ -78,7 +76,6 @@ click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName
         userData = userName; // TODO: Saml2 identifier
         encryptedSamlUser = (string.IsNullOrEmpty(userName)) ? "" : userName.EnCrypt();
         logoutHref = "Logout?usercrypt=" + encryptedSamlUser;
-        ;
 
         visibility_value = "visible";
         display_value = "block";                  

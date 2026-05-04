@@ -7,7 +7,7 @@
 @inherits OwningComponentBase
 <AuthorizeView>
     <Authorized>
-        Hello, @username! <a href="Logout?user=@username">Logout</a>
+        Hello, @username! <a href="@logoutUrl">Logout</a>
     </Authorized>
     <NotAuthorized>
         You're not authorized! <a href="@navigateUrl">Login</a>
@@ -16,18 +16,19 @@
 </AuthorizeView>
 @code {
     public AuthenticateStub? AuthenticationStub { get; set; }
-    public string returnUrl = "", navigateUrl = "";
+    public string returnUrl = "", navigateUrl = "", logoutUrl = "logout";
     public string username = "", usercrypt = "";
 
     protected override async Task OnInitializedAsync()
     {
-        string[] userNames = [];
+        string[] userNames = [];       
         AuthenticationStub = ScopedServices.GetRequiredService<AuthenticateStub>();
         if (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false)
             username = ClaimsPrincipal.Current?.Identity?.Name ?? string.Empty;
         userNames = await AuthenticationStub.GetLoginNameIdentifier(AuthenticationStateProvider);
-        username = (userNames != null && userNames.Length > 0 && !String.IsNullOrEmpty(userNames[0])) 
+        username = (userNames != null && userNames.Length > 0 && !String.IsNullOrEmpty(userNames[0]))
                         ? userNames[0] : username;
+        logoutUrl = (string.IsNullOrEmpty(username)) ? "Logout" : $"Logout?user={username}";
 
         ThirdPartySignOnLog.LogStatic("UserName initialized: " + username);
         usercrypt = username.EnCrypt();

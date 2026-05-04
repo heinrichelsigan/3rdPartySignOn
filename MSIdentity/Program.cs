@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using ThirdPartySignOn.MSIdentity;
 using ThirdPartySignOn.MSIdentity.Data;
 
 
@@ -15,7 +14,7 @@ namespace ThirdPartySignOn.MSIdentity
     /// </summary>
     public class Program
     {
-        public static readonly string appName = "3rdPartySignOn.MSIdentity";
+        public static readonly string appName = "SSO.MSIdentity";        
 
         public static void Main(string[] args)
         {
@@ -41,7 +40,6 @@ namespace ThirdPartySignOn.MSIdentity
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor()
                 .AddMicrosoftIdentityConsentHandler();
-            builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddSingleton<AuthenticateStub>();
 
             var app = builder.Build();
@@ -81,7 +79,7 @@ namespace ThirdPartySignOn.MSIdentity
             app.MapControllers();
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");
-            ThirdPartySignOnLog.LogStatic(appName, "app.UseAuthorization().UseAuthorization()");
+            ThirdPartySignOnLog.LogStatic(appName, "app.MapFallbackToPage(\"/_Host\")");
 
 
             app.Run();

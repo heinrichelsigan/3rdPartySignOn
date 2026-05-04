@@ -1,0 +1,87 @@
+﻿@page "/UserClaims"
+@using System.Security.Claims
+@using ThirdPartySignOn.Google.Data
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticateStub AuthenticateStub
+@inherits OwningComponentBase
+
+<PageTitle>UserClaims</PageTitle>
+<h1>UserClaims</h1>
+
+<p role="alertdialog" style="visibility: visible; display: block; padding: 2px; margin: 2px; border-block: dashed;">
+    <h2>UserInfo</h2>
+    <br />
+    UserName: <label>@userName</label>
+    <br />
+    RealName: <label>@realName</label>
+    <br />
+    Encrypted User: <span style="font-family: monospace">@encryptedUser</span>
+</p>
+
+<div class="card">
+    <h2>Claims</h2>
+    <table border="0" cellpadding="0" cellspacing="0">>
+        <tr>
+            <td>Issuer</td>
+            <td>Subject</td>
+            <td>Type</td>
+            <td>Value</td>
+        </tr>        
+        @foreach (System.Security.Claims.Claim claim in claimsList)
+        {
+            <tr>
+                <td>@claim.Issuer</td>
+                <td>@claim.Subject</td>                    
+                <td>@claim.Type</td>
+                <td>@claim.Value</td>                    
+            </tr>
+        }            
+    </table>
+</div>
+    
+
+@code {
+    private AuthenticateStub? AuthenticationStub { get; set; }
+    public string userName = "", encryptedUser = "", realName = "";
+    public List<System.Security.Claims.Claim> claimsList = new List<System.Security.Claims.Claim>();
+
+    /// <summary>
+    /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
+    /// It is used to perform any asynchronous initialization tasks that are required for the component to function properly.
+    /// This method is called after the component has been instantiated and its parameters have been set,
+    /// but before the component is rendered for the first time.
+    ///
+    /// AuthenticateStub is used to get the login name identifier and the saml2 claims from the authentication state provider, which is injected into the component.
+    /// loginName is the login name identifier, which is encrypted with a simple reversible encryption method and stored in encryptedUser.
+    /// saml2User is a reduced version of the saml2 user info, which contains only the most important claims, and is stored in saml2User.
+    /// 
+    /// </summary>
+    /// <returns>void Task</returns>
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        string[] loginNames = await AuthenticationStub.GetLoginNameIdentifier(AuthenticationStateProvider);        
+        if (loginNames != null && loginNames.Length > 0)
+        {
+            foreach (string userLoginName in loginNames)
+            {
+                if (!string.IsNullOrEmpty(userLoginName))
+                {
+                    userName = userLoginName;
+                    break;
+                }
+            }
+        } 
+
+        if (string.IsNullOrEmpty(userName) && (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false))
+            userName = ClaimsPrincipal.Current?.Identity?.Name ?? "";
+        encryptedUser = Crypt.Encrypt(userName);
+        realName = AuthenticateStub.RealName;
+        claimsList = AuthenticateStub.ClaimsList;
+    }
+
+ }

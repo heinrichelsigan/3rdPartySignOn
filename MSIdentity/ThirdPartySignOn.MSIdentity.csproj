@@ -8,8 +8,15 @@
     <WebProject_DirectoryAccessLevelKey>0</WebProject_DirectoryAccessLevelKey>
     <StartupObject>ThirdPartySignOn.MSIdentity.Program</StartupObject>
     <RepositoryUrl>https://github.com/heinrichelsigan/3rdPartySignOn/</RepositoryUrl>
-    <AssemblyVersion>2.25.505</AssemblyVersion>
-    <FileVersion>2.25.505</FileVersion>
+    <AssemblyVersion>2.25.506</AssemblyVersion>
+    <FileVersion>2.25.506</FileVersion>
+    <PackageProjectUrl>https://test.cqrxs.eu/SingleSignOn/Saml</PackageProjectUrl>
+    <Description>https://test.cqrxs.eu/SingleSignOn/Saml
+https://test.area23.at/ThirdPartySignOn/MSIdentity/</Description>
+    <Copyright>Heinrich Elsigan 2000 - 2040</Copyright>
+    <Title>SSO.MSIdentity</Title>
+    <PackageIcon>favicon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -19,6 +26,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DebugType>embedded</DebugType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Log\README.MD" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Log\README.MD" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="wwwroot\favicon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" NoWarn="NU1605" />

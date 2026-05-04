@@ -1,7 +1,8 @@
-﻿using ThirdPartySignOn.MSIdentity.Data;
+﻿using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using System.Configuration;
 using System.Security.Cryptography;
 using System.Text;
+using ThirdPartySignOn.MSIdentity.Data;
 
 namespace ThirdPartySignOn.MSIdentity.Data
 {
@@ -54,54 +55,23 @@ namespace ThirdPartySignOn.MSIdentity.Data
     #region En-/DeCrypt extension methods
     public static class CryptExtensions
     {
-        
+
         /// <summary>
         /// Extension method for sting - encrypts plain with 1x AES, then 3 x 3-DES
         /// </summary>
         /// <param name="plain"><see cref="string">plain text</see></param>
         /// <returns><see cref="string">encrypted string</see></returns>
-        public static string EnCrypt(this string plain)
-        {
-            // 1x AES encryption
-            AES aes = new AES();
-            byte[] am = aes.EncryptBytes(Encoding.UTF8.GetBytes(plain));
-
-            // 3x Triple DES encryption                       
-            DES3 des3 = new DES3();
-            byte[] dam = des3.EncryptBytes(am);
-            des3 = new DES3();
-            byte[] des = des3.EncryptBytes(dam);
-            des3 = new DES3();
-            byte[] cryptBytes = des3.EncryptBytes(des);
-
-            return cryptBytes.ToHex();
-        }
+        public static string EnCrypt(this string plain) => Crypt.Encrypt(plain);
+       
 
         /// <summary>
         /// Extension method for sting - decrypts encrypted text with 3 x 3-DES, then 1 x AES
         /// </summary>
         /// <param name="encrypted"><see cref="string">encrypted text</see></param>
         /// <returns><see cref="string">decrypted plain text</see></returns>
-        public static string DeCrypt(this string encrypted)
-        {
-            // 3x Triple DES decryption
-            byte[] cryptBytes = encrypted.HexToBytes();
-            DES3 des3 = new DES3();
-            byte[] am = des3.DecryptBytes(cryptBytes);
-            des3 = new DES3();
-            byte[] dam = des3.DecryptBytes(am);
-            des3 = new DES3();
-            byte[] des = des3.DecryptBytes(dam);
-
-            // 1x AES decryption
-            AES aes = new AES();
-            byte[] plainBytes = aes.DecryptBytes(des);
-
-            string plainText = Encoding.UTF8.GetString(plainBytes);
-
-            return plainText.TrimEnd("\0".ToCharArray());
-        }
-
+        public static string DeCrypt(this string encrypted) => Crypt.Decrypt(encrypted);
+        
+        
         /// <summary>
         /// <see cref="T:byte[]"/>.TarBytes extension method: tars 
         /// </summary>
@@ -204,7 +174,7 @@ namespace ThirdPartySignOn.MSIdentity.Data
         protected internal byte[] DesKey { get; private set; } = Array.Empty<byte>(); // []
         protected internal byte[] DesIv { get; private set; } = Array.Empty<byte>(); // []
 
-        protected internal TripleDESCryptoServiceProvider Des3;
+        protected internal TripleDES Des3;
 
         protected internal static ICryptoTransform? CryptTrans = null;
 
@@ -229,24 +199,26 @@ namespace ThirdPartySignOn.MSIdentity.Data
 
         internal void Gen3DesIv(byte[] keyBytes, ref byte[] ivBytes)
         {
-            TripleDESCryptoServiceProvider desHelper = new TripleDESCryptoServiceProvider();
-            desHelper.Key = keyBytes;
-            desHelper.GenerateIV();
-            int iVLenght = desHelper.IV.Length;
-
-            DesIv = new byte[iVLenght];
-            if (iVLenght > DesKeyLen)
+            int iVLenght = 0;
+            using (TripleDES tripleDes = TripleDES.Create())
             {
-                while (ivBytes.Length < iVLenght)
-                    ivBytes = ivBytes.TarBytes(ivBytes);
+                tripleDes.Key = keyBytes;
+                tripleDes.GenerateIV();
+                iVLenght = tripleDes.IV.Length;
+                DesIv = new byte[iVLenght];
+                if (iVLenght > DesKeyLen)
+                {
+                    while (ivBytes.Length < iVLenght)
+                        ivBytes = ivBytes.TarBytes(ivBytes);
+                }
+
+                Array.Copy(ivBytes, 0, DesIv, 0, iVLenght);
+
+                ivBytes = new byte[iVLenght];
+                Array.Copy(DesIv, 0, ivBytes, 0, iVLenght);
+
+                tripleDes.Clear();
             }
-
-            Array.Copy(ivBytes, 0, DesIv, 0, iVLenght);
-
-            ivBytes = new byte[iVLenght];
-            Array.Copy(DesIv, 0, ivBytes, 0, iVLenght);
-
-            desHelper.Clear();
 
             return;
         }
@@ -271,11 +243,14 @@ namespace ThirdPartySignOn.MSIdentity.Data
 
             // MD5 md5 = new MD5CryptoServiceProvider();
             // DesKey = md5.ComputeHash(desKey);
-            Des3 = new TripleDESCryptoServiceProvider();
-            Des3.Key = DesKey;
-            Des3.IV = DesIv;
-            Des3.Mode = CipherMode.ECB;
-            Des3.Padding = PaddingMode.Zeros;
+            if (Des3 == null)
+            {
+                Des3 = TripleDES.Create();
+                Des3.Key = DesKey;
+                Des3.IV = DesIv;
+                Des3.Mode = CipherMode.CFB;
+                Des3.Padding = PaddingMode.Zeros;
+            }
         }
 
         public DES3(byte[] desKey, byte[] desIv)
@@ -289,11 +264,14 @@ namespace ThirdPartySignOn.MSIdentity.Data
             // MD5 md5 = new MD5CryptoServiceProvider(); // DesKey = md5.ComputeHash(desKey);
             Gen3DesKey(ref desKey);
             Gen3DesIv(DesKey, ref desIv);
-            Des3 = new TripleDESCryptoServiceProvider();
-            Des3.Key = DesKey;
-            Des3.IV = DesIv;
-            Des3.Mode = CipherMode.ECB;
-            Des3.Padding = PaddingMode.Zeros;
+            if (Des3 == null)
+            {
+                Des3 = TripleDES.Create();
+                Des3.Key = DesKey;
+                Des3.IV = DesIv;
+                Des3.Mode = CipherMode.CFB;
+                Des3.Padding = PaddingMode.Zeros;
+            }
         }
 
         #endregion ctor
@@ -311,8 +289,13 @@ namespace ThirdPartySignOn.MSIdentity.Data
                 throw new ArgumentNullException("inBytes");
 
             if (Des3 == null)
-                Des3 = new TripleDESCryptoServiceProvider() { Key = DesKey, IV = DesIv, Mode = CipherMode.ECB, Padding = PaddingMode.Zeros };
-
+            {
+                Des3 = TripleDES.Create();                
+                Des3.Key = DesKey;
+                Des3.IV = DesIv;
+                Des3.Mode = CipherMode.CFB;
+                Des3.Padding = PaddingMode.Zeros;                
+            }                
             CryptTrans = Des3.CreateEncryptor();
 
             byte[] cryptedBytes = CryptTrans.TransformFinalBlock(inBytes, 0, inBytes.Length);
@@ -333,8 +316,13 @@ namespace ThirdPartySignOn.MSIdentity.Data
                 throw new ArgumentNullException("cipherBytes");
 
             if (Des3 == null)
-                Des3 = new TripleDESCryptoServiceProvider() { Key = DesKey, IV = DesIv, Mode = CipherMode.ECB, Padding = PaddingMode.Zeros };
-
+            {
+                Des3 = TripleDES.Create();
+                Des3.Key = DesKey;
+                Des3.IV = DesIv;
+                Des3.Mode = CipherMode.CFB;
+                Des3.Padding = PaddingMode.Zeros;
+            }
             CryptTrans = Des3.CreateDecryptor();
 
             byte[] decryptedBytes = CryptTrans.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
@@ -402,8 +390,8 @@ namespace ThirdPartySignOn.MSIdentity.Data
         protected internal static byte[] AesKey { get; private set; } = new byte[AesKeyLen];
         
         protected internal static byte[] AesIv { get; private set; } = Array.Empty<byte>(); // []
-
-        protected internal static RijndaelManaged AesAlgo { get; private set; } = new RijndaelManaged();
+             
+        protected internal static Aes AesAlgo { get; private set; } 
 
         #endregion properties
 
@@ -424,23 +412,24 @@ namespace ThirdPartySignOn.MSIdentity.Data
 
         internal void GenAesIv(byte[] keyBytes, ref byte[] ivBytes)
         {
-            var aesHelper = new RijndaelManaged();
-            aesHelper.Key = keyBytes;
-            aesHelper.GenerateIV();
-            int iVLenght = aesHelper.IV.Length;
-            AesIv = new byte[iVLenght];
-            if (iVLenght > AesKeyLen)
+            using (Aes aesAlg = Aes.Create())
             {
-                while (ivBytes.Length < iVLenght)
-                    ivBytes = ivBytes.TarBytes(ivBytes);
-                Array.Copy(ivBytes, 0, AesIv, 0, iVLenght);
+                aesAlg.Key = keyBytes;
+                aesAlg.GenerateIV();
+                int iVLenght = aesAlg.IV.Length;
+                AesIv = new byte[iVLenght];
+                if (iVLenght > AesKeyLen)
+                {
+                    while (ivBytes.Length < iVLenght)
+                        ivBytes = ivBytes.TarBytes(ivBytes);
+                    Array.Copy(ivBytes, 0, AesIv, 0, iVLenght);
+                }
+                else
+                    Array.Copy(ivBytes, 0, AesIv, 0, iVLenght);
+
+                ivBytes = new byte[iVLenght];
+                Array.Copy(AesIv, 0, ivBytes, 0, iVLenght);
             }
-            else
-                Array.Copy(ivBytes, 0, AesIv, 0, iVLenght);
-
-            ivBytes = new byte[iVLenght];
-            Array.Copy(AesIv, 0, ivBytes, 0, iVLenght);
-
         }
 
         #endregion ctor helpers
@@ -472,11 +461,11 @@ namespace ThirdPartySignOn.MSIdentity.Data
                 AesIv = Encoding.UTF8.GetBytes(AES_IV);
             }
 
-            AesAlgo = new RijndaelManaged();
+            AesAlgo = Aes.Create();
             // AesAlgo.KeySize = AesKeyLen;
             AesAlgo.Key = AesKey;
             AesAlgo.IV = AesIv;
-            AesAlgo.Mode = CipherMode.ECB;
+            AesAlgo.Mode = CipherMode.CFB;
             AesAlgo.Padding = PaddingMode.Zeros;
         }
 
@@ -490,10 +479,10 @@ namespace ThirdPartySignOn.MSIdentity.Data
             GenAesKey(ref aesKey);
             GenAesIv(aesKey, ref aesIv);
 
-            AesAlgo = new RijndaelManaged();
+            AesAlgo = Aes.Create();
             AesAlgo.Key = AesKey;
             AesAlgo.IV = AesIv;
-            AesAlgo.Mode = CipherMode.ECB;
+            AesAlgo.Mode = CipherMode.CFB;
             AesAlgo.Padding = PaddingMode.Zeros;
 
         }
@@ -574,7 +563,7 @@ namespace ThirdPartySignOn.MSIdentity.Data
 
     }
 
-#endregion AES 3-DES implementation
+    #endregion AES 3-DES implementation
 
 
 }

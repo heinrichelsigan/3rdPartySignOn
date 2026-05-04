@@ -1,5 +1,6 @@
 ﻿@using static ThirdPartySignOn.MSIdentity.Program
 @using ThirdPartySignOn.MSIdentity.Data
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using Microsoft.Extensions.DependencyInjection
@@ -19,11 +20,7 @@ Welcome to @appName,
 <br />
 click on <NavLink class="nav-fill" href="Index">Index</NavLink> to view main index site (this).
 <br />
-click on <NavLink class="nav-fill" href="Counter">Counter</NavLink> for counter.
-<br />
-click on <NavLink class="nav-item" href="Error">Error</NavLink> to see error page.
-<br />
-click on <NavLink class="nav-item" href="FetchData">FetchData</NavLink> to see fetch data service.
+click on <NavLink class="nav-item" href="UserClaims">UserClaims</NavLink> to see user claims.
 <br />
 click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName to logout.
 <br />
@@ -31,19 +28,23 @@ click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName
 <SurveyPrompt Title="How is Blazor working for you?" />
 
 <p role="alertdialog" style="visibility: @visibility_value; display: @display_value; padding: 2 2 2 2; margin: 2 2 2 2; border-block: dashed;">
+    RealName: <label>@realName</label>
+    <br />
+    UserName: <label>@userName</label>
+    <br />
+    Encrypted User: <label>@encryptedSamlUser</label>
+    <br />
+    NavigateUrl: <a href="@navigateUrl" target="_self">@navigateUrl</a>
+    <br />
+    LogoutUrl:  <a href="@logoutHref" target="_self">@logoutHref</a>
+    <br />
     About @AssemblyTitle
     <br />
     Version @AssemblyVersion
     <br />
     &copy; @AssemblyCopyright
     <br />
-    @AssemblyDescription
-    <br />
-    UserName: <label>@userName</label>
-    <br />
-    Encrypted Saml User: <label>@encryptedSamlUser</label>
-    <br />
-    NavigateUrl: <a href="@navigateUrl" target="_self" style="visibility: @visibility_value; display: @display_value">@navigateUrl</a>
+    @AssemblyDescription   
 </p>
 <br />
 
@@ -52,7 +53,7 @@ click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName
     public string returnUrl = "", navigateUrl = "", rawUrl = "";
     public string visibility_value = "hidden", display_value = "none";
     public string appName = Program.appName, logoutHref = "Logout?user=";
-    public string userName = "", encryptedSamlUser = "", userData = ""; // Where to get it?
+    public string userName = "", encryptedSamlUser = "", realName = "";
 
     /// <summary>
     /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
@@ -78,12 +79,23 @@ click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName
 
         appName = SettingsKeyReader.ApplicationName;
         string[] userNames = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
-        userName = (userNames != null && userNames.Length > 0) ? userNames[0] : "";
+        if (userNames != null && userNames.Length > 0)
+        {
+            for (int ui = 0; ui < userNames.Length; ui++) 
+            {
+                if (!string.IsNullOrEmpty(userNames[ui]))
+                {
+                    userName = userNames[ui];
+                    break;
+                }
+            }
+        }
+        if (string.IsNullOrEmpty(userName) && (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false))
+            userName = ClaimsPrincipal.Current?.Identity?.Name ?? "";
 
-        userData = userName; // TODO: Saml2 identifier
+        realName = AuthenticateStub.RealName;
         encryptedSamlUser = (string.IsNullOrEmpty(userName)) ? "" : userName.EnCrypt();
         logoutHref = "Logout?user=" + userName;
-        ;
 
         visibility_value = "visible";
         display_value = "block";

@@ -84,3 +84,11 @@ nunit-*.xml
 /MSIdentity/Properties/serviceDependencies.local.json.user
 /Google/.config
 /Google/.vs
+/Google/Properties/PublishProfiles
+/MSIdentity/Properties/PublishProfiles/AzureAd_Single_x64_Release.pubxml.user
+/Google/dotnet-tools.json
+/Google/ThirdPartySignOn.Google.csproj.user
+/MSIdentity/Properties/PublishProfiles/AzureAd_Single_x64_Release.pubxml
+/Saml/Properties/PublishProfiles/Saml_SelfContained_x64_release.pubxml.user
+/Saml/ThirdPartySignOn.Saml.csproj.user
+/Saml/Properties/PublishProfiles/Saml_SelfContained_x64_release.pubxml

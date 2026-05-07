@@ -1,26 +1,31 @@
-﻿using System.Diagnostics;
+﻿
+using SSO3rd.Library;
+using System.Configuration;
+using System.Diagnostics;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 
-namespace ThirdPartySignOn.Saml.Services
+namespace SSO3rd.Library
 {
-    
+
     /// <summary>
     /// simple static logger via NLog
     /// </summary>
-    public class ThirdPartySignOnLog
+    public class SSOLog : IDisposable
     {
 
         #region static fields and properties
 
         private static readonly Lock _lock = new Lock(), _outerLock = new Lock();
-        private static readonly Lazy<ThirdPartySignOnLog> instance = new Lazy<ThirdPartySignOnLog>(() => new ThirdPartySignOnLog());
+        private static readonly Lazy<SSOLog> instance = new Lazy<SSOLog>(() => new SSOLog());
 
         private static int checkedToday = DateTime.UtcNow.Date.Day;
 
         /// <summary>
         /// Get the Logger
         /// </summary>
-        public static ThirdPartySignOnLog Logger { get => instance.Value; }
+        public static SSOLog Logger { get => instance.Value; }
 
         /// <summary>
         /// Checked today if logfiles and other needed resources exist
@@ -51,7 +56,7 @@ namespace ThirdPartySignOn.Saml.Services
         /// <summary>
         /// private Singelton constructor
         /// </summary>
-        static ThirdPartySignOnLog()
+        static SSOLog()
         {
             LogFile = Path.Combine(SettingsKeyReader.LogFilePath, DateTime.Now.LogFileDate());
             InitLog("");
@@ -68,15 +73,15 @@ namespace ThirdPartySignOn.Saml.Services
         protected internal static void InitLog(string appName = "")
         {
             AppName = (!string.IsNullOrEmpty(appName)) ? appName : String.Empty;
-			ThirdPartySignOnLog.LogFileByAppName(appName);			
+            SSOLog.LogFileByAppName(appName);
         }
 
         public static string LogFileByAppName(string appName = "")
         {
             LogFile = (!string.IsNullOrEmpty(appName)) ?
                 Path.Combine(SettingsKeyReader.LogFilePath, DateTime.Now.AppLogFile(appName)) :
-                Path.Combine(SettingsKeyReader.LogFilePath, DateTime.Now.LogFileDate()); 
-			return LogFile;				
+                Path.Combine(SettingsKeyReader.LogFilePath, DateTime.Now.LogFileDate());
+            return LogFile;
         }
 
         /// <summary>
@@ -88,7 +93,7 @@ namespace ThirdPartySignOn.Saml.Services
         {
             string logMsg = string.Empty, errMsg = string.Empty, allLogMsg = string.Empty;
 
-			// Create Logfile, if logfile doesn't exist or new day
+            // Create Logfile, if logfile doesn't exist or new day
             if (string.IsNullOrEmpty(LogFile) || !CheckedToday || !File.Exists(LogFile))
             {
                 LogFile = LogFileByAppName(appName);
@@ -103,66 +108,61 @@ namespace ThirdPartySignOn.Saml.Services
                         catch (Exception exLogFiteCreate)
                         {
                             errMsg = String.Format("{0} \tCreating logfile {1} Exception {2} {3} \n\t{4}\n",
-								DateTime.Now.ThirdPartySignOnDateTimeWithSeconds(), 
-								LogFile, exLogFiteCreate.GetType(), exLogFiteCreate.Message, exLogFiteCreate.ToString());
-							Console.Error.WriteLine(errMsg);
-							AppDomain.CurrentDomain.SetData("LOG_EXCEPTION_STATIC", errMsg);                            
+                                DateTime.Now.DateTimeWithSeconds(),
+                                LogFile, exLogFiteCreate.GetType(), exLogFiteCreate.Message, exLogFiteCreate.ToString());
+                            SetAppDomainData<string>("LOG_EXCEPTION_STATIC", errMsg);
                         }
                     }
                 }
             }
 
-			// Write buffered log lines first
-			try
-			{
-				if ((AppDomain.CurrentDomain.GetData("ALL_KEYS") != null) &&
-					((allLogMsg = (string)AppDomain.CurrentDomain.GetData("ALL_KEYS")) != null) && 
-					!string.IsNullOrEmpty(allLogMsg))
-				{
-					lock (_lock)
-					{
-						File.AppendAllText(LogFile, allLogMsg, System.Text.Encoding.UTF8);
-						allLogMsg = ""; // empty allLogMsg and set Buffer to empty
-						AppDomain.CurrentDomain.SetData("ALL_KEYS", allLogMsg);
-					}
-				}
-			}
-			catch (Exception exLog)
-			{
-				lock (_lock)
-				{
-					errMsg = String.Format("{0} \tWriting to file {1} Exception {2} {3} \n{4}\n",
-						DateTime.Now.ThirdPartySignOnDateTimeWithSeconds(), LogFile, exLog.GetType(), exLog.Message, exLog.ToString());
-					AppDomain.CurrentDomain.SetData("LOG_EXCEPTION_STATIC", errMsg);
-					Console.Error.WriteLine(errMsg);
-				}
-			}
+            // Write buffered log lines first
+            try
+            {
+                allLogMsg = GetAppDomainData<string>("ALL_KEYS") ?? "";
+                if (!string.IsNullOrEmpty(allLogMsg))
+                {
+                    lock (_lock)
+                    {
+                        File.AppendAllText(LogFile, allLogMsg, System.Text.Encoding.UTF8);
+                        allLogMsg = ""; // empty allLogMsg and set Buffer to empty
+                        SetAppDomainData<string>("ALL_KEYS", allLogMsg);
+                    }
+                }
+            }
+            catch (Exception exLog)
+            {
+                lock (_lock)
+                {
+                    errMsg = String.Format("{0} \tWriting to file {1} Exception {2} {3} \n{4}\n",
+                        DateTime.Now.DateTimeWithSeconds(), LogFile, exLog.GetType(), exLog.Message, exLog.ToString());
+                    SetAppDomainData<string>("LOG_EXCEPTION_STATIC", errMsg);
+                }
+            }
 
-			// create logMsg and write it to LogFile, when failed => buffer logMsg
-			logMsg = DateTime.Now.ThirdPartySignOnDateTimeWithSeconds() + "\t " + 
-				(string.IsNullOrEmpty(msg) ? string.Empty : (msg.EndsWith("\n") ? msg : msg + "\n"));
-			try
-			{
-				lock (_lock)
-				{
-					File.AppendAllText(LogFile, logMsg, System.Text.Encoding.UTF8);
-				}
-			}
-			catch (Exception exLogWrite)
-			{
-				lock (_lock)
-				{
-					errMsg = String.Format("{0} \tWriting to file {1} Exception {2} {3} \n{4}\n",
-						DateTime.Now.ThirdPartySignOnDateTimeWithSeconds(), LogFile, exLogWrite.GetType(), exLogWrite.Message, exLogWrite.ToString());
-					AppDomain.CurrentDomain.SetData("LOG_EXCEPTION_STATIC", errMsg);
-					Console.Error.WriteLine(errMsg);
-					
-					if (AppDomain.CurrentDomain.GetData("ALL_KEYS") != null)
-						allLogMsg = (string)AppDomain.CurrentDomain.GetData("ALL_KEYS") ?? string.Empty;
-					allLogMsg += "\n" + logMsg;
-					AppDomain.CurrentDomain.SetData("ALL_KEYS", allLogMsg);						
-				}
-			}
+            // create logMsg and write it to LogFile, when failed => buffer logMsg
+            logMsg = DateTime.Now.DateTimeWithSeconds() + "\t " +
+                (string.IsNullOrEmpty(msg) ? string.Empty : (msg.EndsWith("\n") ? msg : msg + "\n"));
+            try
+            {
+                lock (_lock)
+                {
+                    File.AppendAllText(LogFile, logMsg, System.Text.Encoding.UTF8);
+                }
+            }
+            catch (Exception exLogWrite)
+            {
+                lock (_lock)
+                {
+                    errMsg = String.Format("{0} \tWriting to file {1} Exception {2} {3} \n{4}\n",
+                        DateTime.Now.DateTimeWithSeconds(), LogFile, exLogWrite.GetType(), exLogWrite.Message, exLogWrite.ToString());
+                    SetAppDomainData<string>("LOG_EXCEPTION_STATIC", errMsg);
+
+                    allLogMsg = GetAppDomainData<string>("ALL_KEYS") ?? "";
+                    allLogMsg += "\n" + logMsg;
+                    SetAppDomainData<string>("ALL_KEYS", allLogMsg);
+                }
+            }
         }
 
         /// <summary>
@@ -171,9 +171,9 @@ namespace ThirdPartySignOn.Saml.Services
         /// <param name="exLog"><see cref="Exception"/> to log</param>
         /// <param name="appName">application name</param>
         public static void Log(Exception exLog, string appName = "")
-        {            
+        {
             string excMsg = String.Format("{0} throwed {1} ⇒ {2}\t{3}\n\tStacktrace: \t{4}\n",
-                typeof(ThirdPartySignOnLog).GetCallerInfo(1),
+                typeof(SSOLog).GetCallerInfo(2),
                 exLog.GetType(),
                 exLog.Message,
                 exLog.ToString().Replace("\r", "").Replace("\n", " "),
@@ -182,14 +182,12 @@ namespace ThirdPartySignOn.Saml.Services
             Log(excMsg, appName);
         }
 
-        public static void LogStatic(string msg, string appName = "") => ThirdPartySignOnLog
-			.Log(msg + appName, msg);
+        public static void LogStatic(string msg, string appName = "") => SSOLog.Log(msg + appName, msg);
 
-        public static void LogStatic(string prefix, Exception xZpd, string appName) => ThirdPartySignOnLog
-			.LogOriginMsgEx(appName, prefix, xZpd);
+        public static void LogStatic(string prefix, Exception xZpd, string appName) => SSOLog
+            .LogOriginMsgEx(appName, prefix, xZpd);
 
-        public static void LogStatic(Exception ex, string appName = "") => ThirdPartySignOnLog
-			.Log(ex, appName);
+        public static void LogStatic(Exception ex, string appName = "") => SSOLog.Log(ex, appName);
 
         /// <summary>
         /// Log origin with message to NLog
@@ -197,9 +195,9 @@ namespace ThirdPartySignOn.Saml.Services
         /// <param name="origin">origin of message</param>
         /// <param name="message">enabler message to log</param>
         /// <param name="level">log level: 0 for Trace, 1 for Debug, ..., 4 for Error, 5 for Fatal</param>
-        public static void LogOriginMsg(string origin, string message, int level = 2) => ThirdPartySignOnLog
-			.LogStatic((string.IsNullOrEmpty(origin) ? "  \t" : origin + " \t") + message);
-        
+        public static void LogOriginMsg(string origin, string message, int level = 2) => SSOLog
+            .LogStatic((string.IsNullOrEmpty(origin) ? "  \t" : origin + " \t") + message);
+
 
         public static void LogOriginEx(string origin, Exception ex, int level = 2)
         {
@@ -226,8 +224,75 @@ namespace ThirdPartySignOn.Saml.Services
                 LogStatic($"{logPrefix} \t{ex.GetType()} StackTrace: \t{ex.StackTrace}");
         }
 
+        public static T? GetAppDomainData<T>(string key)
+        {
+            T? t = default(T);
+            object? o = null;
+            int appDomId = -1;
+            try
+            {
+                appDomId = AppDomain.CurrentDomain.Id;
+                o = System.AppDomain.CurrentDomain.GetData(key);
+            } 
+            catch (AppDomainUnloadedException ex) 
+            {
+                string errMsg = String.Format("{0} \tReading from AppDomain {1} Exception {2} {3} \n{4}\n",
+                        DateTime.Now.DateTimeWithSeconds(), appDomId, ex.GetType(), ex.Message, ex.ToString());
+                Console.Error.WriteLine(errMsg);
+            }
+            return (o != null) ? (T)o : t;
+        }
+
+        public static void SetAppDomainData<T>(string key, T value)
+        {
+            int appDomId = -1;
+            try
+            {
+                appDomId = AppDomain.CurrentDomain.Id;
+                AppDomain.CurrentDomain.SetData(key, value);
+            }
+            catch (AppDomainUnloadedException ex)
+            {
+                string errMsg = String.Format("{0} \tWriting to AppDomain {1} Exception {2} {3} \n{4}\n",
+                        DateTime.Now.DateTimeWithSeconds(), appDomId, ex.GetType(), ex.Message, ex.ToString());
+                Console.Error.WriteLine(errMsg);
+            }
+        }
+
         #endregion static members
 
+
+
+        public void Dispose()
+        {
+            string allLogMsg = "";
+            lock (_lock)
+            {
+                try
+                {
+                    allLogMsg = GetAppDomainData<string>("ALL_KEYS") ?? "";
+                    if (!string.IsNullOrEmpty(allLogMsg))
+                    {                        
+                        File.AppendAllText(LogFile, allLogMsg, System.Text.Encoding.UTF8);
+                        allLogMsg = ""; // empty allLogMsg and set Buffer to empty
+                        SetAppDomainData<string>("ALL_KEYS", allLogMsg);
+                        Console.WriteLine($"Wrote {allLogMsg.Length} chars from buffer to logfile: {LogFile}");
+                    }
+                }
+                catch (Exception exLog)
+                {
+                    string errMsg = String.Format("{0} \tWriting to file {1} Exception {2} {3} \n{4}\n",
+                        DateTime.Now.DateTimeWithSeconds(), LogFile, exLog.GetType(), exLog.Message, exLog.ToString());
+                    Console.Error.WriteLine(errMsg);
+                }
+            }
+        }
+
+
+        ~SSOLog()
+        {
+            Dispose();
+        }
     }
 
 
@@ -239,40 +304,39 @@ namespace ThirdPartySignOn.Saml.Services
         #region DateTime extensions
 
         /// <summary>
-        /// ThirdPartySignOnDate extension method for DateTime
+        /// SSODate extension method for DateTime
         /// </summary>
         /// <param name="dateTime"><see cref="DateTime"/> to format</param>
         /// <returns>formatted date <see cref="string"/></returns>
-        public static string ThirdPartySignOnDate(this DateTime dt) => dt
-			.ToString("yyyy-MM-dd");
+        public static string SSODate(this DateTime dt) => dt.ToString("yyyy-MM-dd");
 
         public static string LogFileDate(this DateTime dt) => String
-			.Concat(dt.ThirdPartySignOnDate(), "_log.txt");
-        public static string AppLogFile(this DateTime dt, string appName)  => String
-			.Concat(dt.ThirdPartySignOnDate(), $"_{appName}.log");
+            .Concat(dt.SSODate(), "_log.txt");
+        public static string AppLogFile(this DateTime dt, string appName) => String
+            .Concat(dt.SSODate(), $"_{appName}.log");
 
 
         /// <summary>
-        /// ThirdPartySignOnDateTime extension method for DateTime
+        /// SSODateTime extension method for DateTime
         /// </summary>
         /// <param name="dateTime"><see cref="DateTime"/> to format</param>
         /// <returns>formatted date time <see cref="string"/> </returns>
-        public static string ThirdPartySignOnDateTime(this DateTime dt) => dt
-			.ToString("yyyy-MM-dd HH:mm ");
+        public static string SSODateTime(this DateTime dt) => dt
+            .ToString("yyyy-MM-dd HH:mm ");
 
         /// <summary>
-        /// ThirdPartySignOnDateTimeWithSeconds extension method for DateTime
+        /// DateTimeWithSeconds extension method for DateTime
         /// </summary>
         /// <param name="dateTime">d</param>
         /// <returns><see cref="string"/> formatted date time including seconds</returns>
-        public static string ThirdPartySignOnDateTimeWithSeconds(this DateTime dt) => dt
-			.ToString("yyyy-MM-dd_HH:mm:ss");
-        
-        public static string ThirdPartySignOnDateTimeWithMillis(this DateTime dt) => String
+        public static string DateTimeWithSeconds(this DateTime dt) => dt
+            .ToString("yyyy-MM-dd_HH:mm:ss");
+
+        public static string DateTimeWithMillis(this DateTime dt) => String
             .Format("{0:yyyyMMdd_HHmmss}_{1}", dt, dt.Millisecond);
 
-        public static string ThirdPartySignOnDateTimePrecise(this DateTime dt) => String
-			.Format("{0:yyyyMMdd_HHmmss}", dt);
+        public static string DateTimePrecise(this DateTime dt) => String
+            .Format("{0:yyyyMMdd_HHmmss}", dt);
 
         #endregion DateTime extensions
 
@@ -287,15 +351,15 @@ namespace ThirdPartySignOn.Saml.Services
         {
             string fullName = "unknown";
             try
-            {                
+            {
                 if (type != null)
                 {
                     if (type.DeclaringType != null)
                         fullName = (type.DeclaringType.FullName != null) ? type.DeclaringType.FullName.ToString() : type.DeclaringType.Name.ToString();
-                    else 
+                    else
                         fullName = (type.FullName != null) ? type.FullName.ToString() : type.Name.ToString();
-                } 
-            } 
+                }
+            }
             catch
             {
                 fullName = "unknown";
@@ -303,19 +367,22 @@ namespace ThirdPartySignOn.Saml.Services
             try
             {
                 StackFrame frame = new StackFrame(skipFrames + 1);
-                MethodBase method = frame.GetMethod();
+                MethodBase? method = frame?.GetMethod();
                 fullName = $"{method?.DeclaringType?.FullName}.{method?.Name}";
             }
             catch (Exception ex)
             {
-                ThirdPartySignOnLog.LogOriginMsgEx("ThirdPartySignOn.Saml.Extensions", 
-                    $"Exception in GetCallerInfo(this Type type = {type.ToString()}, int skipFrames = {skipFrames})",
+                SSOLog.LogOriginMsgEx("ThirdPartySignOn.Saml.Extensions",
+                    $"Exception in GetCallerInfo(this Type type = {type?.ToString()}, int skipFrames = {skipFrames})",
                     ex);
             }
 
             return fullName;
-        }            
+        }
 
     }
 
+
+
 }
+

@@ -1,16 +1,23 @@
-﻿using Newtonsoft.Json;
+﻿
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using ThirdPartySignOn.Saml.Data;
+using SSO3rd.Library;
+using System.Configuration;
+using System.Security.Cryptography;
+using System.Text;
 
-namespace ThirdPartySignOn.Saml.Services
+namespace SSO3rd.Library
 {
+
 
     /// <summary>
     /// appsettings.json key reader abstraction
     /// </summary>
     public class SettingsKeyReader
     {
-        
+
         #region static pre settings
 
         private static readonly Lock _lock = new Lock();
@@ -26,11 +33,12 @@ namespace ThirdPartySignOn.Saml.Services
                         _baseAppPath = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
                         if (!string.IsNullOrEmpty(_baseAppPath) && Directory.Exists(_baseAppPath))
                         {
-                            if (_baseAppPath.Contains(Path.DirectorySeparatorChar + "bin", StringComparison.OrdinalIgnoreCase))
+                            if (File.Exists(Path.Combine(_baseAppPath, "appsettins.json")) &&
+                                _baseAppPath.Contains(Path.DirectorySeparatorChar + "bin", StringComparison.OrdinalIgnoreCase))
                             {
                                 int idx = _baseAppPath.IndexOf(Path.DirectorySeparatorChar + "bin");
                                 string bpath = _baseAppPath.Substring(0, idx);
-                                if (!string.IsNullOrEmpty(bpath) && Directory.Exists(bpath))
+                                if (!string.IsNullOrEmpty(bpath) && Directory.Exists(bpath) && File.Exists(Path.Combine(bpath, "appsettins.json")))
                                     _baseAppPath = bpath;
                             }
                         }
@@ -47,10 +55,10 @@ namespace ThirdPartySignOn.Saml.Services
                 string logFilePath = GetKeySetting("LogFilePath");
                 if (!logFilePath.EndsWith(Path.DirectorySeparatorChar))
                     logFilePath += Path.DirectorySeparatorChar.ToString();
-                
+
                 if (!Directory.Exists(logFilePath))
                     Directory.CreateDirectory(logFilePath);
-                
+
                 return logFilePath;
             }
         }
@@ -83,30 +91,12 @@ namespace ThirdPartySignOn.Saml.Services
             return returnValue ?? "";
         }
 
-        /// <summary>
-        /// Gets the saml2 section in appsettings.json
-        /// </summary>
-        /// <param name="configSection">config section name of saml2 section</param>
-        /// <returns><see cref="Saml2IdentConfig"/></returns>
-        public static SamlIdentConfig? GetJsonSettingsSectionSaml2(string configSection)
-        {
-            SamlIdentConfig? saml2IdentConf = null;
-            string configPath = Path.Combine(SettingsKeyReader.BaseAppPath, "appsettings.json");
-            if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
-            {
-                string jsonSerialized = File.ReadAllText(configPath);
-                if (!string.IsNullOrEmpty(jsonSerialized))
-                {
-                    string jsonConfigSection = configSection.Replace(":", ".");
-                    JObject? jobj = (JObject?)JsonConvert.DeserializeObject(jsonSerialized);
-                    JToken? jtok = (JToken?)jobj?.SelectToken(jsonConfigSection);
-                    string restTokenString = (jtok ?? "").ToString();
-                    saml2IdentConf = JsonConvert.DeserializeObject<SamlIdentConfig>(restTokenString);
-                }
-            }
-            return saml2IdentConf;
-        }
 
+        /// <summary>
+        /// GetKeyValueJson 
+        /// </summary>
+        /// <param name="keyPath">JPath in jsonfile</param>
+        /// <returns>key value</returns>
         public static string GetKeyValueJson(string keyPath)
         {
             string jsonFile = Path.Combine(BaseAppPath, "appsettings.json");
@@ -127,22 +117,20 @@ namespace ThirdPartySignOn.Saml.Services
 
         #region appsettings.json fast key value mappings
 
+        public static string ApplicationName { get => GetKeySetting("ApplicationName"); }
+
+        public static string RedirectUrl { get => GetKeySetting("RedirectUrl"); }
+
+        public static string LogoutUrl { get => GetKeySetting("LogoutUrl"); }
+
         public static string DomainName { get => GetKeySetting("DomainName"); }
 
         public static string HostDomainName { get => GetKeySetting("ServerDomain"); }
-
-        public static string Saml2EnablerRedirectUrl { get => GetKeySetting("Saml2EnablerRedirectUrl"); }
-
-        public static string Saml2LogoutUrl { get => GetKeySetting("Saml2LogoutUrl"); }
-        
-        public static string ApplicationName { get => GetKeySetting("ApplicationName"); }
-
-        public static string Saml2AuthGWPath { get => GetKeySetting("Saml2AuthGWPath"); }
-       
-        public static string Saml2CookieName { get => GetKeySetting("Saml2CookieName"); }
+                
 
         #endregion appsettings.json fast key value mappings
 
     }
 
 }
+

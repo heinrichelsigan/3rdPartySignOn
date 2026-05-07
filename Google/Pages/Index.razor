@@ -75,9 +75,9 @@ click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName
         Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         rawUrl = uri.ToString();
         returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        navigateUrl = SettingsKeyReader.GoogleRedirectUrl;
+        navigateUrl = GoogleSettingsKeyReader.RedirectUrl;
 
-        appName = SettingsKeyReader.ApplicationName;
+        appName = GoogleSettingsKeyReader.ApplicationName;
         string[] userNames = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
         if (userNames != null && userNames.Length > 0)
         {

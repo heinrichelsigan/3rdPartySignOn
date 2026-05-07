@@ -72,7 +72,7 @@ namespace ThirdPartySignOn.Saml.Data
         public static SamlIdentConfig? GetJsonSettingsSectionSaml2(string configSection = "Saml2")
         {
             SamlIdentConfig? saml2IdentConf = null;
-            string configPath = Path.Combine(SettingsKeyReader.BaseAppPath, "appsettings.json");
+            string configPath = Path.Combine(Saml2SettingsKeyReader.BaseAppPath, "appsettings.json");
             if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
             {
                 string jsonSerialized = File.ReadAllText(configPath);
@@ -85,6 +85,7 @@ namespace ThirdPartySignOn.Saml.Data
                     saml2IdentConf = JsonConvert.DeserializeObject<SamlIdentConfig>(restTokenString);
                 }
             }
+
             return saml2IdentConf;
         }
 

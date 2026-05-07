@@ -47,10 +47,10 @@
                         ? userNames[0] : username;
         logoutUrl = (string.IsNullOrEmpty(username)) ? "Logout" : $"Logout?user={username}";
 
-        ThirdPartySignOnLog.LogStatic("UserName initialized: " + username);
+        GoogleLog.LogStatic("UserName initialized: " + username);
         usercrypt = (!string.IsNullOrEmpty(username)) ? username.EnCrypt() : "";
 
-            ThirdPartySignOnLog.LogStatic("UserName encrypted: " + usercrypt);
+            GoogleLog.LogStatic("UserName encrypted: " + usercrypt);
         Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         string rawUrl = uri.ToString();
        

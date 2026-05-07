@@ -50,7 +50,7 @@ namespace ThirdPartySignOn.MSIdentity.Data
         public static AzureOpenIdConfig? GetJsonSettingsAzureOpenId(string configSection = "AzureAd")
         {
             AzureOpenIdConfig? azureOpenIdConfig = null;
-            string configPath = Path.Combine(SettingsKeyReader.BaseAppPath, "appsettings.json");
+            string configPath = Path.Combine(AzureADSettingsKeyReader.BaseAppPath, "appsettings.json");
             if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
             {
                 string jsonSerialized = File.ReadAllText(configPath);

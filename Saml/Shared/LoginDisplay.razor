@@ -28,9 +28,9 @@
         if (string.IsNullOrEmpty(username))
             username = await AuthenticationStub.GetLoginNameIdentifier(AuthenticationStateProvider);
          
-        ThirdPartySignOnLog.LogStatic("UserName initialized: " + username);
+        SamlLog.LogStatic("UserName initialized: " + username);
         usercrypt = username.EnCrypt();
-        ThirdPartySignOnLog.LogStatic("UserName encrypted: " + usercrypt);
+        SamlLog.LogStatic("UserName encrypted: " + usercrypt);
         Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         string rawUrl = uri.ToString();
        

@@ -79,7 +79,7 @@ namespace ThirdPartySignOn.Google.Data
 
             var readOpenIdConfig = openIdConfig.Content.ReadAsStringAsync().Result;
             var deserializedOpenIdConfig = JsonConvert.DeserializeObject<OpenIdConfiguration>(readOpenIdConfig);
-            GoogleOpenIdConfig gcfg = SettingsKeyReader.GetJsonSettingsGoogleOpenId();
+            GoogleOpenIdConfig gcfg = GoogleSettingsKeyReader.GetJsonSettingsGoogleOpenId();
 
 
             UserInfoEndpoint = new Uri(deserializedOpenIdConfig.UserinfoEndpoint);
@@ -101,14 +101,14 @@ namespace ThirdPartySignOn.Google.Data
             {
                 return UserInfo;
             }
-            GoogleOpenIdConfig gcfg = SettingsKeyReader.GetJsonSettingsGoogleOpenId();
+            GoogleOpenIdConfig gcfg = GoogleSettingsKeyReader.GetJsonSettingsGoogleOpenId();
 
 
             var tokenRequest = new OAuthTokenRequest(code,
 
                 gcfg.ClientId,
                 gcfg.ClientSecret,
-                SettingsKeyReader.GoogleRedirectUrl,
+                GoogleSettingsKeyReader.RedirectUrl,
                 "*");                
 
             var content = new FormUrlEncodedContent(OAuthTokenRequest.ToKeyValueURL(tokenRequest));

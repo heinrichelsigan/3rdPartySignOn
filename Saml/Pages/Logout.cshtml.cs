@@ -76,7 +76,7 @@ public class LogoutModel : PageModel
 
     internal string GetCurrentGWPath()
     {
-        string currentGWPath = SettingsKeyReader.Saml2AuthGWPath;
+        string currentGWPath = Saml2SettingsKeyReader.Saml2AuthGWPath;
         if (HttpContext.Request.Path.ToString().Contains("logout", StringComparison.OrdinalIgnoreCase))
         {
             int idx = HttpContext.Request.Path.ToString().IndexOf("logout", StringComparison.OrdinalIgnoreCase);
@@ -143,8 +143,8 @@ public class LogoutModel : PageModel
         return cookyList.ToArray();
     }
 
-    internal string GetRequestAuthGWPath() 
-    { 
+    internal string GetRequestAuthGWPath()
+    {
         string reqAuthGWPath = ((HttpContext.Request.IsHttps) ? "https" : "http") + "://" + HttpContext.Request.Host;
         reqAuthGWPath = (reqAuthGWPath.EndsWith("/")) ? reqAuthGWPath : reqAuthGWPath + "/" + GetCurrentGWPath();
         return reqAuthGWPath;
@@ -158,13 +158,13 @@ public class LogoutModel : PageModel
             copts.Expires = DateTimeOffset.UtcNow.AddDays(-1);
             copts.Secure = true;
             copts.Path = GetCurrentGWPath();
-            copts.Domain = SettingsKeyReader.HostDomainName;
+            copts.Domain = Saml2SettingsKeyReader.HostDomainName;
         
             HttpContext.Response.Cookies.Delete(cookieName, copts);
         }
         catch (Exception ex)
         {
-            ThirdPartySignOnLog.LogOriginMsgEx("LogoutModel.DeleteCookie", $"Error deleting cookie {cookieName}", ex);
+            SamlLog.LogOriginMsgEx("LogoutModel.DeleteCookie", $"Error deleting cookie {cookieName}", ex);
         }
     }
 
@@ -176,8 +176,8 @@ public class LogoutModel : PageModel
         RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;        
         RequestCurrentPath = GetCurrentGWPath();
         CurrentUrl = GetLogoutUrl(false);
-        LogoutDirectUrl = !string.IsNullOrEmpty(SettingsKeyReader.Saml2LogoutUrl) ? 
-            SettingsKeyReader.Saml2LogoutUrl : GetLogoutUrl(true);
+        LogoutDirectUrl = !string.IsNullOrEmpty(Saml2SettingsKeyReader.LogoutUrl) ?
+            Saml2SettingsKeyReader.LogoutUrl : GetLogoutUrl(true);
         Items = authResult?.Properties?.Items;       
         
         DeleteCookie(".AspNetCore.Cookies");

@@ -18,9 +18,9 @@
 
 Welcome to @appName, 
 <br />
-click on <NavLink class="nav-fill" href="Index">Claims</NavLink> to view main index site (this).
+click on <NavLink class="nav-fill" href="Index">Index</NavLink> to view main index site (this).
 <br />
-click on <NavLink class="nav-fill" href="Claims">Claims</NavLink> to view your saml claims.
+click on <NavLink class="nav-fill" href="UserClaims">Claims</NavLink> to view your saml claims.
 <br />
 click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName to logout.
 <br />
@@ -69,9 +69,9 @@ click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName
         Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         rawUrl = uri.ToString();
         returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        navigateUrl = SettingsKeyReader.Saml2EnablerRedirectUrl;
+        navigateUrl = Saml2SettingsKeyReader.Saml2EnablerRedirectUrl;
 
-        appName = SettingsKeyReader.ApplicationName;
+        appName = Saml2SettingsKeyReader.ApplicationName;
         userName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
         userData = userName; // TODO: Saml2 identifier
         encryptedSamlUser = (string.IsNullOrEmpty(userName)) ? "" : userName.EnCrypt();

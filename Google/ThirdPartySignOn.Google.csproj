@@ -64,4 +64,8 @@ https://test.area23.at/ThirdPartySignOn/Google/</Description>
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="S:\3rdPartySignOn\SSO3rd.Library\SSO3rd.Library.csproj" />
+  </ItemGroup>
+
 </Project>

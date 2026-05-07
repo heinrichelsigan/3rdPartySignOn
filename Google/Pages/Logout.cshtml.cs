@@ -79,7 +79,7 @@ namespace ThirdPartySignOn.Google.Pages
 
         internal string GetCurrentGWPath()
         {
-            string currentGWPath = SettingsKeyReader.GoogleRedirectUrl;
+            string currentGWPath = GoogleSettingsKeyReader.RedirectUrl;
             if (HttpContext.Request.Path.ToString().Contains("logout", StringComparison.OrdinalIgnoreCase))
             {
                 int idx = HttpContext.Request.Path.ToString().IndexOf("logout", StringComparison.OrdinalIgnoreCase);
@@ -161,13 +161,13 @@ namespace ThirdPartySignOn.Google.Pages
                 copts.Expires = DateTimeOffset.UtcNow.AddDays(-1);
                 copts.Secure = true;
                 copts.Path = GetCurrentGWPath();
-                copts.Domain = SettingsKeyReader.ServerHostName;
+                copts.Domain = GoogleSettingsKeyReader.HostDomainName;
 
                 HttpContext.Response.Cookies.Delete(cookieName, copts);
             }
             catch (Exception ex)
             {
-                ThirdPartySignOnLog.LogOriginMsgEx("LogoutModel.DeleteCookie", $"Error deleting cookie {cookieName}", ex);
+                GoogleLog.LogOriginMsgEx("LogoutModel.DeleteCookie", $"Error deleting cookie {cookieName}", ex);
             }
         }
 
@@ -179,8 +179,8 @@ namespace ThirdPartySignOn.Google.Pages
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
             RequestCurrentPath = GetCurrentGWPath();
             CurrentUrl = GetLogoutUrl(false);
-            LogoutDirectUrl = !string.IsNullOrEmpty(SettingsKeyReader.GoogleRedirectUrl) ?
-                SettingsKeyReader.GoogleRedirectUrl : GetLogoutUrl(true);
+            LogoutDirectUrl = !string.IsNullOrEmpty(GoogleSettingsKeyReader.RedirectUrl) ?
+                GoogleSettingsKeyReader.RedirectUrl : GetLogoutUrl(true);
             Items = authResult?.Properties?.Items;
 
             DeleteCookie(".AspNetCore.Cookies");

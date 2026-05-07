@@ -23,7 +23,7 @@ namespace ThirdPartySignOn.Google.Data
 
         public string SMime { get; set; } 
 
-        internal string ClientSecret { get => Crypt.FromBase64(SMime); set => SMime = Crypt.ToBase64(value); }
+        internal string ClientSecret { get => CryptExtensions.FromBase64(SMime); set => SMime = CryptExtensions.ToBase64(value); }
 
         public string CallbackPath { get; set; } // "/signin-oidc"
 
@@ -59,7 +59,7 @@ namespace ThirdPartySignOn.Google.Data
         public static GoogleOpenIdConfig? GetJsonSettingsGoogleOpenId(string configSection = "Authentication:Google")
         {
             GoogleOpenIdConfig? googleOpenIdConfig = null;
-            string configPath = Path.Combine(SettingsKeyReader.BaseAppPath, "appsettings.json");
+            string configPath = Path.Combine(GoogleSettingsKeyReader.BaseAppPath, "appsettings.json");
             if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
             {
                 string jsonSerialized = File.ReadAllText(configPath);

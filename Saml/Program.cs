@@ -17,19 +17,19 @@ namespace ThirdPartySignOn.Saml
         {
             var builder = WebApplication.CreateBuilder(args);
             SamlIdentConfig? saml2 = new SamlIdentConfig("Saml2");
-            string application_name = SettingsKeyReader.ApplicationName;
-            string cookie_name = SettingsKeyReader.GetKeySetting("Saml2CookieName");
-            string domain_name = SettingsKeyReader.GetKeySetting("DomainName");
+            string application_name = Saml2SettingsKeyReader.ApplicationName;
+            string cookie_name = Saml2SettingsKeyReader.GetKeySetting("Saml2CookieName");
+            string domain_name = Saml2SettingsKeyReader.GetKeySetting("DomainName");
             string saml2_entityId = (saml2 != null && !string.IsNullOrEmpty(saml2.EntityId)) ? 
-                saml2.EntityId : SettingsKeyReader.GetKeySetting("Saml2:EntityId");
+                saml2.EntityId : Saml2SettingsKeyReader.GetKeySetting("Saml2:EntityId");
             string saml2_identityProvider_EntityId = (saml2 != null && !string.IsNullOrEmpty(saml2.EntityId)) ? 
-                saml2.IdentityProvider.EntityId : SettingsKeyReader.GetKeySetting("Saml2:IdentityProvider:EntityId");
+                saml2.IdentityProvider.EntityId : Saml2SettingsKeyReader.GetKeySetting("Saml2:IdentityProvider:EntityId");
             string saml2_metadataLocation = (saml2 != null && !string.IsNullOrEmpty(saml2.IdentityProvider.MetadataLocation)) ? 
-                saml2.IdentityProvider.MetadataLocation : SettingsKeyReader.GetKeySetting("Saml2:IdentityProvider:MetadataLocation");            
+                saml2.IdentityProvider.MetadataLocation : Saml2SettingsKeyReader.GetKeySetting("Saml2:IdentityProvider:MetadataLocation");            
             string saml2_logoutLocation = (saml2 != null) ?
-                saml2.LogoutLocation : SettingsKeyReader.GetKeySetting("Saml2:LogoutLocatíon");
+                saml2.LogoutLocation : Saml2SettingsKeyReader.GetKeySetting("Saml2:LogoutLocatíon");
             string saml2_identityProvider_logoutUrl = (!string.IsNullOrEmpty(saml2_logoutLocation)) ?
-                saml2_logoutLocation : SettingsKeyReader.GetKeySetting("Saml2:IdentityProvider:LogoutUrl");
+                saml2_logoutLocation : Saml2SettingsKeyReader.GetKeySetting("Saml2:IdentityProvider:LogoutUrl");
 
             if (string.IsNullOrEmpty(saml2_identityProvider_logoutUrl)) 
             {
@@ -96,40 +96,40 @@ namespace ThirdPartySignOn.Saml
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            ThirdPartySignOnLog.LogStatic(AppName, "program starting...");
+            SamlLog.LogStatic(AppName, "program starting...");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                ThirdPartySignOnLog.LogStatic(AppName, "app.UseDeveloperExceptionPage()");
+                SamlLog.LogStatic(AppName, "app.UseDeveloperExceptionPage()");
             }
             else
             {
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
-                ThirdPartySignOnLog.LogStatic(AppName, "app.UseExceptionHandler(\"/Error\")");
+                SamlLog.LogStatic(AppName, "app.UseExceptionHandler(\"/Error\")");
             }
            
             app.UseStaticFiles();
             app.UseRouting();
-            ThirdPartySignOnLog.LogStatic(AppName, "app.UseRouting()");
+            SamlLog.LogStatic(AppName, "app.UseRouting()");
 
             if (saml2_entityId.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
                 app.UseHttpsRedirection();
-                ThirdPartySignOnLog.LogStatic(AppName, "app.UseHttpsRedirection()");
+                SamlLog.LogStatic(AppName, "app.UseHttpsRedirection()");
             }
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseCookiePolicy();
-            ThirdPartySignOnLog.LogStatic(AppName, "app.UseAuthorization().UseAuthorization()");
+            SamlLog.LogStatic(AppName, "app.UseAuthorization().UseAuthorization()");
 
 
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");
-            ThirdPartySignOnLog.LogStatic(AppName, "app.MapBlazorHub().MapFallbackToPage(\"/_Host\")");
+            SamlLog.LogStatic(AppName, "app.MapBlazorHub().MapFallbackToPage(\"/_Host\")");
 
             app.Run();
         }

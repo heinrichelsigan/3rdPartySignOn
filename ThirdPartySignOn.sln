@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.37216.2
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11723.231 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThirdPartySignOn.Saml", "Saml\ThirdPartySignOn.Saml.csproj", "{AE65F958-49FD-4F23-BFF3-EA673BBC7AE1}"
 EndProject
@@ -13,6 +13,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThirdPartySignOn.MSIdentity", "MSIdentity\ThirdPartySignOn.MSIdentity.csproj", "{AA674704-9379-78EB-C35C-02C03DD5BF7B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThirdPartySignOn.Google", "C:\Users\heinrich.elsigan\source\3rdPartySignOn\Google\ThirdPartySignOn.Google.csproj", "{3A96461A-86F9-12C0-417D-80EB9E6F2AAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SSO3rd.Library", "SSO3rd.Library\SSO3rd.Library.csproj", "{D3E3C111-FC02-403C-B6AB-E2EA5CDEB5AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{3A96461A-86F9-12C0-417D-80EB9E6F2AAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A96461A-86F9-12C0-417D-80EB9E6F2AAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A96461A-86F9-12C0-417D-80EB9E6F2AAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3E3C111-FC02-403C-B6AB-E2EA5CDEB5AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3E3C111-FC02-403C-B6AB-E2EA5CDEB5AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3E3C111-FC02-403C-B6AB-E2EA5CDEB5AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3E3C111-FC02-403C-B6AB-E2EA5CDEB5AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

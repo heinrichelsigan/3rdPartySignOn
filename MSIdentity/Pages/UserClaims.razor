@@ -79,7 +79,7 @@
 
         if (string.IsNullOrEmpty(userName) && (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false))
             userName = ClaimsPrincipal.Current?.Identity?.Name ?? "";
-        encryptedUser = Crypt.Encrypt(userName);
+        encryptedUser = SSO3rd.Library.Crypt.Encrypt(userName);
         realName = AuthenticateStub.RealName;
         claimsList = AuthenticateStub.ClaimsList;
     }

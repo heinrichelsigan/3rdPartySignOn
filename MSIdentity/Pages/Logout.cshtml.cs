@@ -46,7 +46,7 @@ namespace ThirdPartySignOn.MSIdentity.Pages
             string userLoginName = "";
             if (User!.Identity!.IsAuthenticated)
             {
-                userLoginName = User!.Identity!.Name;
+                userLoginName = User?.Identity?.Name ?? "";
                 if (!string.IsNullOrEmpty(userLoginName))
                 {
                     IsAuthenticated = true;
@@ -79,7 +79,7 @@ namespace ThirdPartySignOn.MSIdentity.Pages
 
         internal string GetCurrentGWPath()
         {
-            string currentGWPath = SettingsKeyReader.AzureGatewayPath;
+            string currentGWPath = AzureADSettingsKeyReader.AzureGatewayPath;
             if (HttpContext.Request.Path.ToString().Contains("logout", StringComparison.OrdinalIgnoreCase))
             {
                 int idx = HttpContext.Request.Path.ToString().IndexOf("logout", StringComparison.OrdinalIgnoreCase);
@@ -161,13 +161,13 @@ namespace ThirdPartySignOn.MSIdentity.Pages
                 copts.Expires = DateTimeOffset.UtcNow.AddDays(-1);
                 copts.Secure = true;
                 copts.Path = GetCurrentGWPath();
-                copts.Domain = SettingsKeyReader.ServerHostName;
+                copts.Domain = AzureADSettingsKeyReader.HostDomainName;
 
                 HttpContext.Response.Cookies.Delete(cookieName, copts);
             }
             catch (Exception ex)
             {
-                ThirdPartySignOnLog.LogOriginMsgEx("LogoutModel.DeleteCookie", $"Error deleting cookie {cookieName}", ex);
+                MSIdentityLog.LogOriginMsgEx("LogoutModel.DeleteCookie", $"Error deleting cookie {cookieName}", ex);
             }
         }
 
@@ -179,8 +179,8 @@ namespace ThirdPartySignOn.MSIdentity.Pages
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
             RequestCurrentPath = GetCurrentGWPath();
             CurrentUrl = GetLogoutUrl(false);
-            LogoutDirectUrl = !string.IsNullOrEmpty(SettingsKeyReader.AzureLogoutUrl) ?
-                SettingsKeyReader.AzureLogoutUrl : GetLogoutUrl(true);
+            LogoutDirectUrl = !string.IsNullOrEmpty(AzureADSettingsKeyReader.LogoutUrl) ?
+                AzureADSettingsKeyReader.LogoutUrl : GetLogoutUrl(true);
             Items = authResult?.Properties?.Items;
 
             DeleteCookie(".AspNetCore.Cookies");

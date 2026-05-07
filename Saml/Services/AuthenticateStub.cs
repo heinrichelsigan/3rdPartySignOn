@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
+using System.IdentityModel.Claims;
 using System.Security.Claims;
 using ThirdPartySignOn.Saml.Data;
 
@@ -13,7 +14,6 @@ namespace ThirdPartySignOn.Saml.Services
 
         #region Saml authentication and saml claims
 
-        public List<SamlClaimReduced> claimsList = new List<SamlClaimReduced>();
         public string UserName = "";
 
         /// <summary>
@@ -24,53 +24,23 @@ namespace ThirdPartySignOn.Saml.Services
         public async Task<string> GetLoginNameIdentifier(AuthenticationStateProvider authStateProvider)
         {
             var authState = await authStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
+            UserName = "";
+            var user = authState.User;            
 
             if (user.Identity is not null && user.Identity.IsAuthenticated)
             {
                 UserName = user.Identity.Name ?? "";
-                foreach (var claim in ((ClaimsIdentity)user.Identity).Claims)
+                foreach (var sclaim in ((ClaimsIdentity)user.Identity).Claims)
                 {
-                    SamlClaimReduced rClaim = new SamlClaimReduced(claim);
-                    if (rClaim.ClaimType.Contains("nameidentifier"))
+                    if (sclaim.Type.Contains("nameidentifier"))
                     {
-                        UserName = rClaim.ClaimValue;
+                        UserName = sclaim.Value;
                         break;
                     }
                 }
-                return UserName;
             }
-            return "Not Authenticated";
-        }
 
-        /// <summary>
-        /// GetAuthClaims
-        /// </summary>
-        /// <param name="authStateProvider"></param>
-        /// <returns><see cref="Task{List{Saml2ClaimReduced}}"/></returns>
-        public async Task<List<SamlClaimReduced>> GetAuthClaims(AuthenticationStateProvider authStateProvider)
-        {
-            var authState = await authStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity is not null && user.Identity.IsAuthenticated)
-            {
-                claimsList.Clear();
-                foreach (var claim in ((ClaimsIdentity)user.Identity).Claims)
-                {
-                    SamlClaimReduced rClaim = new SamlClaimReduced(claim);
-                    if (rClaim.ClaimType.Contains("nameidentifier"))
-                        UserName = rClaim.ClaimValue;
-
-                    claimsList.Add(rClaim);
-
-                }
-                return claimsList;
-            }
-            else
-            {
-                return new List<SamlClaimReduced>();
-            }
+            return UserName;
         }
 
         /// <summary>
@@ -78,9 +48,9 @@ namespace ThirdPartySignOn.Saml.Services
         /// </summary>
         /// <param name="authStateProvider"></param>
         /// <returns><see cref="Task{SamlUserInfoReduced}"/></returns>
-        public async Task<SamlUserInfoReduced> GetSamlUserInfoReduced(AuthenticationStateProvider authStateProvider)
+        public async Task<SamlUserInfo> GetSamlUserInfoReduced(AuthenticationStateProvider authStateProvider)
         {
-            SamlUserInfoReduced saml2User = new SamlUserInfoReduced();
+            SamlUserInfo saml2User = new SamlUserInfo();
             var authState = await authStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             if (user.Identity is not null && user.Identity.IsAuthenticated)
@@ -95,26 +65,25 @@ namespace ThirdPartySignOn.Saml.Services
                     if (sclaim == null)
                         continue;
 
-                    SamlClaimReduced rClaim = new SamlClaimReduced(sclaim); // get reduced claim
-                    if (saml2User.ClaimsDictionary.ContainsKey(rClaim.ClaimType))
-                        saml2User.ClaimsDictionary[rClaim.ClaimType] = rClaim.ClaimValue;
+                    if (saml2User.ClaimsDictionary.ContainsKey(sclaim.Type))
+                        saml2User.ClaimsDictionary[sclaim.Type] = sclaim.Value;
                     else 
-                        saml2User.ClaimsDictionary.Add(rClaim.ClaimType, rClaim.ClaimValue); // add claim type / value to dictionary
+                        saml2User.ClaimsDictionary.Add(sclaim.Type, sclaim.Value); // add claim type / value to dictionary
 
-                    if (rClaim.ClaimType.Contains("nameidentifier")) // get name identifier claim value
-                        saml2User.NameIdentifier = rClaim.ClaimValue;
-                    if (rClaim.ClaimType.Contains("authenticationmethod")) // get authentication method claim value
-                        saml2User.AuthenticatioMethod = rClaim.ClaimValue;
-                    if (rClaim.ClaimType.Contains("authenticationinstant")) // get authentication instant claim value
+                    if (sclaim.Type.Contains("nameidentifier")) // get name identifier claim value
+                        saml2User.NameIdentifier = sclaim.Value;
+                    if (sclaim.Type.Contains("authenticationmethod")) // get authentication method claim value
+                        saml2User.AuthenticatioMethod = sclaim.Value;
+                    if (sclaim.Type.Contains("authenticationinstant")) // get authentication instant claim value
                     {
                         DateTime parsedDate = DateTime.Now.AddDays(-1);
-                        if (DateTime.TryParse(rClaim.ClaimValue, out parsedDate))
+                        if (DateTime.TryParse(sclaim.Value, out parsedDate))
                             saml2User.AuthenticationInstant = parsedDate;
                     }
-                    if (rClaim.ClaimType.Contains("LogoutNameIdentifier")) // get logout name identifier claim value
-                        saml2User.LogoutNameIdentifier = rClaim.ClaimValue;
-                    if (rClaim.ClaimType.Contains("SessionIndex"))  // get session index claim value
-                        saml2User.SessionIndex = Int32.Parse(rClaim.ClaimValue);
+                    if (sclaim.Type.Contains("LogoutNameIdentifier")) // get logout name identifier claim value
+                        saml2User.LogoutNameIdentifier = sclaim.Value;
+                    if (sclaim.Type.Contains("SessionIndex"))  // get session index claim value
+                        saml2User.SessionIndex = Int32.Parse(sclaim.Value);
                 }
             }
 

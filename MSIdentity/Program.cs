@@ -61,25 +61,25 @@ namespace ThirdPartySignOn.MSIdentity
 
             app.UseStaticFiles();
             app.UseRouting();
-            ThirdPartySignOnLog.LogStatic(appName, "app.UseRouting()");
+            MSIdentityLog.LogStatic(appName, "app.UseRouting()");
 
-            string urlapp = SettingsKeyReader.AzureRedirectUrl;
+            string urlapp = AzureADSettingsKeyReader.RedirectUrl;
             if (!string.IsNullOrEmpty(urlapp) && urlapp.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
                 app.UseHttpsRedirection();
-                ThirdPartySignOnLog.LogStatic(appName, "app.UseHttpsRedirection()");
+                MSIdentityLog.LogStatic(appName, "app.UseHttpsRedirection()");
             }
 
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseCookiePolicy();
-            ThirdPartySignOnLog.LogStatic(appName, "app.UseAuthorization().UseAuthorization()");
+            MSIdentityLog.LogStatic(appName, "app.UseAuthorization().UseAuthorization()");
 
 
             app.MapControllers();
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");
-            ThirdPartySignOnLog.LogStatic(appName, "app.MapFallbackToPage(\"/_Host\")");
+            MSIdentityLog.LogStatic(appName, "app.MapFallbackToPage(\"/_Host\")");
 
 
             app.Run();

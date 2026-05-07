@@ -30,9 +30,9 @@
                         ? userNames[0] : username;
         logoutUrl = (string.IsNullOrEmpty(username)) ? "Logout" : $"Logout?user={username}";
 
-        ThirdPartySignOnLog.LogStatic("UserName initialized: " + username);
+        MSIdentityLog.LogStatic("UserName initialized: " + username);
         usercrypt = username.EnCrypt();
-        ThirdPartySignOnLog.LogStatic("UserName encrypted: " + usercrypt);
+        MSIdentityLog.LogStatic("UserName encrypted: " + usercrypt);
         Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         string rawUrl = uri.ToString();
        

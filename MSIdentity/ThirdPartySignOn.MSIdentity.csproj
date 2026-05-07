@@ -54,4 +54,8 @@ https://test.area23.at/ThirdPartySignOn/MSIdentity/</Description>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SSO3rd.Library\SSO3rd.Library.csproj" />
+  </ItemGroup>
+
 </Project>

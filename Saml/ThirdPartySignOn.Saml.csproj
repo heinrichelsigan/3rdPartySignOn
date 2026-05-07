@@ -7,8 +7,8 @@
     <Copyright>2000 - 2060 Heinrich Elsigan for Logic4Biz GmbH</Copyright>
     <PackageProjectUrl>https://test.enabler.info/3rdPartySignOn/Saml2/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/heinrichelsigan/3rdPartySignOn</RepositoryUrl>
-    <AssemblyVersion>2.26.505</AssemblyVersion>
-    <FileVersion>2.26.505</FileVersion>
+    <AssemblyVersion>2.26.507</AssemblyVersion>
+    <FileVersion>2.26.507</FileVersion>
     <StartupObject>ThirdPartySignOn.Saml.Program</StartupObject>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>3rdPartySignOn Saml2</PackageReleaseNotes>
@@ -29,6 +29,7 @@
     <None Remove="Connected Services\**" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="Data\SamlClaimReduced.cs" />
     <Compile Remove="Pages\SignInOut.cshtml.cs" />
     <Compile Remove="Services\CookieStorageAccessor.cs" />
     <Compile Remove="Services\HttpClientRequest.cs" />
@@ -68,5 +69,8 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SSO3rd.Library\SSO3rd.Library.csproj" />
   </ItemGroup>
 </Project>

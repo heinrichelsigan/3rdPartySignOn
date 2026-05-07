@@ -25,24 +25,24 @@ namespace ThirdPartySignOn.Google
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            string smime = SettingsKeyReader.GetKeySetting("Authentication:Google:SMime");
-            string clientSecret = Crypt.FromBase64(smime).Replace("\n", "").Replace("\r", "");
+            string smime = GoogleSettingsKeyReader.GetKeySetting("Authentication:Google:SMime");
+            string clientSecret = CryptExtensions.FromBase64(smime).Replace("\n", "").Replace("\r", "");
 
 
             // Add services to the container.
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
             builder.Services.AddAuthentication().AddGoogle(options =>
             {
-                options.ClientId = SettingsKeyReader.GetKeySetting("Authentication:Google:ClientId");
+                options.ClientId = GoogleSettingsKeyReader.GetKeySetting("Authentication:Google:ClientId");
                 options.ClientSecret = clientSecret;
-                options.TokenEndpoint = SettingsKeyReader.GetKeySetting("Authentication:Google:TokenUri");
-                options.AuthorizationEndpoint = SettingsKeyReader.GetKeySetting("Authentication:Google:AuthUri");
+                options.TokenEndpoint = GoogleSettingsKeyReader.GetKeySetting("Authentication:Google:TokenUri");
+                options.AuthorizationEndpoint = GoogleSettingsKeyReader.GetKeySetting("Authentication:Google:AuthUri");
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             });
 
             builder.Services.AddHttpClient("AuthUri", client =>
             {
-                client.BaseAddress = new Uri(SettingsKeyReader.GetKeySetting("Authentication:Google:AuthUri"));
+                client.BaseAddress = new Uri(GoogleSettingsKeyReader.GetKeySetting("Authentication:Google:AuthUri"));
             });
             //builder.Services
             //    .AddScoped<IGoogleConnectService, GoogleConnectService>()
@@ -115,25 +115,25 @@ namespace ThirdPartySignOn.Google
 
             app.UseStaticFiles();
             app.UseRouting();
-            ThirdPartySignOnLog.LogStatic(appName, "app.UseRouting()");
+            GoogleLog.LogStatic(appName, "app.UseRouting()");
 
-            string urlapp = SettingsKeyReader.GoogleRedirectUrl;
+            string urlapp = GoogleSettingsKeyReader.RedirectUrl;
             if (!string.IsNullOrEmpty(urlapp) && urlapp.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
                 app.UseHttpsRedirection();
-                ThirdPartySignOnLog.LogStatic(appName, "app.UseHttpsRedirection()");
+                GoogleLog.LogStatic(appName, "app.UseHttpsRedirection()");
             }
 
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseCookiePolicy();
-            ThirdPartySignOnLog.LogStatic(appName, "app.UseAuthorization().UseAuthorization()");
+            GoogleLog.LogStatic(appName, "app.UseAuthorization().UseAuthorization()");
 
 
             app.MapControllers();
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");
-            ThirdPartySignOnLog.LogStatic(appName, "app.MapFallbackToPage(\"/_Host\")");
+            GoogleLog.LogStatic(appName, "app.MapFallbackToPage(\"/_Host\")");
 
 
             app.Run();

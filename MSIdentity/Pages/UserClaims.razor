@@ -24,20 +24,19 @@
 
 <div class="card">
     <h2>Claims</h2>
-    <table border="0" cellpadding="0" cellspacing="0">>
+    <table border="0" cellpadding="2" cellspacing="2" style="width: 920px;">
         <tr>
-            <td>Issuer</td>
-            <td>Subject</td>
+            <td>Issuer / Subject</td>
             <td>Type</td>
             <td>Value</td>
         </tr>        
         @foreach (System.Security.Claims.Claim claim in claimsList)
         {
             <tr>
-                <td>@claim.Issuer</td>
-                <td>@claim.Subject</td>                    
+                <td>@claim.Issuer
+                <br />@claim.Subject</td>                    
                 <td>@claim.Type</td>
-                <td>@claim.Value</td>                    
+                <td style="max-width: 720px;">@claim.Value</td>                    
             </tr>
         }            
     </table>
@@ -64,23 +63,20 @@
     protected override async Task OnInitializedAsync()
     {
         AuthenticationStub = ScopedServices.GetRequiredService<AuthenticateStub>();
-        string[] loginNames = await AuthenticationStub.GetLoginNameIdentifier(AuthenticationStateProvider);        
-        if (loginNames != null && loginNames.Length > 0)
+        Dictionary<string, string> dictNames = await AuthenticateStub.GetLoginIds(AuthenticationStateProvider);
+        if (dictNames != null && dictNames.Count > 0)
         {
-            foreach (string userLoginName in loginNames)
-            {
-                if (!string.IsNullOrEmpty(userLoginName))
-                {
-                    userName = userLoginName;
-                    break;
-                }
-            }
-        } 
+            if (dictNames.ContainsKey("preferred_username"))
+                userName = dictNames["preferred_username"];
+                
+            if (string.IsNullOrEmpty(userName) && dictNames.ContainsKey("User.Identity.Name"))
+                userName = dictNames["User.Identity.Name"];
+            
+            if (dictNames.ContainsKey("name"))
+                realName = dictNames["name"];
+        }
 
-        if (string.IsNullOrEmpty(userName) && (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false))
-            userName = ClaimsPrincipal.Current?.Identity?.Name ?? "";
         encryptedUser = SSO3rd.Library.Crypt.Encrypt(userName);
-        realName = AuthenticateStub.RealName;
         claimsList = AuthenticateStub.ClaimsList;
     }
 

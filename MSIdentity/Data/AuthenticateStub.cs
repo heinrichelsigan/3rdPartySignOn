@@ -11,15 +11,12 @@ namespace ThirdPartySignOn.MSIdentity.Data
     public class AuthenticateStub
     {
         public static List<System.Security.Claims.Claim> ClaimsList { get; private set; }
-        public static List<string> LoginNames { get; private set; }
+        public Dictionary<string, string> DictNames { get; private set; }
         public static string UserName { get; private set; }
-        public static string RealName { get; private set; }
 
         static AuthenticateStub()
         {
-            RealName = "";
-            UserName = "";
-            LoginNames = new List<string>();
+            UserName = "";            
             ClaimsList = new List<System.Security.Claims.Claim>();
         }
 
@@ -28,21 +25,34 @@ namespace ThirdPartySignOn.MSIdentity.Data
         /// </summary>
         /// <param name="authStateProvider"></param>
         /// <returns><see cref="Task{string}">Task containing username</see></returns>
-        public async Task<string[]> GetLoginNameIdentifier(AuthenticationStateProvider authStateProvider)
+        public async Task<Dictionary<string, string>> GetLoginIds(AuthenticationStateProvider authStateProvider)
         {
             var authState = await authStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            if (LoginNames == null || LoginNames.Count == 0) 
-                LoginNames = new List<string>();
-            
+            var user = authState.User;            
+
             if (user.Identity is not null && user.Identity.IsAuthenticated)
             {
+                if (DictNames == null || DictNames.Count == 0)
+                    DictNames = new Dictionary<string, string>();
+                else
+                    DictNames.Clear();
+
                 UserName = user.Identity.Name ?? "";
-                if (!string.IsNullOrEmpty(UserName) && !LoginNames.Contains(UserName))
-                    LoginNames.Add(UserName);
-                string displayName = user.GetDisplayName() ?? "[no display naame]";
-                if (!LoginNames.Contains(displayName))
-                    LoginNames.Add(displayName);
+                if (!string.IsNullOrEmpty(UserName))
+                {
+                    if (!DictNames.ContainsKey("User.Identity.Name"))
+                        DictNames.Add("User.Identity.Name", UserName);
+                    else
+                        DictNames["User.Identity.Name"] = UserName;
+                }
+                string displayName = user.GetDisplayName() ?? "";
+                if (!string.IsNullOrEmpty(displayName))
+                {
+                    if (!DictNames.ContainsKey("User.DisplayName"))
+                        DictNames.Add("User.DisplayName", displayName);
+                    else
+                        DictNames["User.DisplayName"] = displayName;
+                }
 
                 if (ClaimsList == null || ClaimsList.Count == 0)
                     ClaimsList = new List<Claim>();
@@ -57,18 +67,23 @@ namespace ThirdPartySignOn.MSIdentity.Data
                         if (claim.Type != null && claim.Type.EndsWith("username") && !string.IsNullOrEmpty(claim.Value))
                         {
                             UserName = claim.Value;
-                            if (!LoginNames.Contains(claim.Value))
-                                LoginNames.Insert(0, claim.Value);
+                            if (!DictNames.ContainsKey(claim.Type))
+                                DictNames.Add(claim.Type, claim.Value);
+                            else
+                                DictNames[claim.Type] = claim.Value;
                         }
                         if (claim.Type != null && claim.Type.Equals("name", StringComparison.OrdinalIgnoreCase))
                         {
-                            RealName = claim.Value;
+                            if (!DictNames.ContainsKey(claim.Type))
+                                DictNames.Add(claim.Type, claim.Value);
+                            else
+                                DictNames[claim.Type] = claim.Value.ToString();
                         }
                     }
                 }               
             }
-            
-            return LoginNames.ToArray(); 
+
+            return DictNames;
         }
 
     }

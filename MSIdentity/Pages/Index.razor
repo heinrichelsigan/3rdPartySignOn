@@ -78,22 +78,19 @@ click on <NavLink class="nav-item" href="@logoutHref">Logout</NavLink> @userName
         navigateUrl = AzureADSettingsKeyReader.RedirectUrl;
 
         appName = AzureADSettingsKeyReader.ApplicationName;
-        string[] userNames = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
-        if (userNames != null && userNames.Length > 0)
+        Dictionary<string, string> dictNames = await AuthenticateStub.GetLoginIds(AuthenticationStateProvider);
+        if (dictNames != null && dictNames.Count > 0)
         {
-            for (int ui = 0; ui < userNames.Length; ui++) 
-            {
-                if (!string.IsNullOrEmpty(userNames[ui]))
-                {
-                    userName = userNames[ui];
-                    break;
-                }
-            }
+            if (dictNames.ContainsKey("preferred_username"))
+                userName = dictNames["preferred_username"];
+                
+            if (string.IsNullOrEmpty(userName) && dictNames.ContainsKey("User.Identity.Name"))
+                userName = dictNames["User.Identity.Name"];
+            
+            if (dictNames.ContainsKey("name"))
+                realName = dictNames["name"];
         }
-        if (string.IsNullOrEmpty(userName) && (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false))
-            userName = ClaimsPrincipal.Current?.Identity?.Name ?? "";
 
-        realName = AuthenticateStub.RealName;
         encryptedSamlUser = (string.IsNullOrEmpty(userName)) ? "" : userName.EnCrypt();
         logoutHref = "Logout?user=" + userName;
 

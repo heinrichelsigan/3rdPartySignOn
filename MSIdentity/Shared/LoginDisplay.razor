@@ -7,7 +7,7 @@
 @inherits OwningComponentBase
 <AuthorizeView>
     <Authorized>
-        Hello, @username! <a href="@logoutUrl">Logout</a>
+        Hello, @userName! <a href="@logoutUrl">Logout</a>
     </Authorized>
     <NotAuthorized>
         You're not authorized! <a href="@navigateUrl">Login</a>
@@ -17,22 +17,31 @@
 @code {
     public AuthenticateStub? AuthenticationStub { get; set; }
     public string returnUrl = "", navigateUrl = "", logoutUrl = "logout";
-    public string username = "", usercrypt = "";
+    public string userName = "", realName = "", userCrypt = "";
 
     protected override async Task OnInitializedAsync()
     {
-        string[] userNames = [];       
-        AuthenticationStub = ScopedServices.GetRequiredService<AuthenticateStub>();
-        if (ClaimsPrincipal.Current?.Identity?.IsAuthenticated ?? false)
-            username = ClaimsPrincipal.Current?.Identity?.Name ?? string.Empty;
-        userNames = await AuthenticationStub.GetLoginNameIdentifier(AuthenticationStateProvider);
-        username = (userNames != null && userNames.Length > 0 && !String.IsNullOrEmpty(userNames[0]))
-                        ? userNames[0] : username;
-        logoutUrl = (string.IsNullOrEmpty(username)) ? "Logout" : $"Logout?user={username}";
 
-        MSIdentityLog.LogStatic("UserName initialized: " + username);
-        usercrypt = username.EnCrypt();
-        MSIdentityLog.LogStatic("UserName encrypted: " + usercrypt);
+        AuthenticationStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        Dictionary<string, string> dictNames = await AuthenticateStub.GetLoginIds(AuthenticationStateProvider);
+        if (dictNames != null && dictNames.Count > 0)
+        {
+            if (dictNames.ContainsKey("preferred_username"))
+                userName = dictNames["preferred_username"];
+                
+            if (string.IsNullOrEmpty(userName) && dictNames.ContainsKey("User.Identity.Name"))
+                userName = dictNames["User.Identity.Name"];
+            
+            if (dictNames.ContainsKey("name"))
+                realName = dictNames["name"];
+        }      
+
+        logoutUrl = (string.IsNullOrEmpty(userName)) ? "Logout" : $"Logout?user={userName}";
+        MSIdentityLog.LogStatic("UserName initialized: " + userName + " realName: " + realName);
+
+        userCrypt = userName.EnCrypt();
+        MSIdentityLog.LogStatic("UserName encrypted: " + userCrypt);
+
         Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         string rawUrl = uri.ToString();
        

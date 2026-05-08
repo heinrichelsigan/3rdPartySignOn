@@ -39,8 +39,6 @@ click on <NavLink class="nav-pills" href="Auto">Auto</NavLink> redirect to enabl
     <br />
     Encrypted Saml2 User: <label>@encryptedSaml2User</label>
     <br />
-    Forms Auth Ticket: <label>@formsAuthTicket</label>
-    <br />
     NavigateUrl: <a href="@navigateUrl" target="_self">@navigateUrl</a>
 </p>
 <br />
@@ -49,7 +47,7 @@ click on <NavLink class="nav-pills" href="Auto">Auto</NavLink> redirect to enabl
     public AuthenticateStub? Authentication { get; set; }
     public string returnUrl = "", navigateUrl = "", rawUrl = "";
     public string visibility_value = "hidden", display_value = "none";
-    public string userName = "", encryptedSaml2User = "", formsAuthTicket = ""; // Where to get it?
+    public string userName = "", encryptedSaml2User = ""; // Where to get it?
 
     /// <summary>
     /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
@@ -76,13 +74,6 @@ click on <NavLink class="nav-pills" href="Auto">Auto</NavLink> redirect to enabl
         userName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
         encryptedSaml2User = (string.IsNullOrEmpty(userName)) ? "" : userName.EnCrypt();
 
-        formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(encryptedSaml2User, true);
-        // Alternativly you can call it:
-        if (string.IsNullOrEmpty(formsAuthTicket))
-        {
-            formsAuthTicket = await Saml2SoapClient.GetFormsTicketHttpAsync(userName, false);
-        }
-
         visibility_value = "visible";
         display_value = "block";                  
     }
@@ -90,11 +81,10 @@ click on <NavLink class="nav-pills" href="Auto">Auto</NavLink> redirect to enabl
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {        
-        if (firstRender && string.IsNullOrEmpty(formsAuthTicket))
+        if (firstRender && string.IsNullOrEmpty(userName))
         {
             AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
             userName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
-            formsAuthTicket = await Saml2SoapClient.GetFormsTicketHttpAsync(userName, false);
 
             visibility_value = "visible";
             display_value = "block";

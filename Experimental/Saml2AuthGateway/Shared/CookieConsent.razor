@@ -65,59 +65,9 @@
     protected async Task AcceptPolicy()
     {
         await cookie.SetValue("acceptPolicy", cookieString);
-        navigateUrl = await Saml2AuthenitcatedUserRedirection();
+        // navigateUrl = await Saml2AuthenitcatedUserRedirection();
         showBanner = false;
     }
-
-
-    /// <summary>
-    /// Saml2AuthenitcatedUserRedirection
-    /// executes or prepares redirection of a SAML2 authenticated user
-    /// </summary>
-    /// <returns>navigation url to redirect</returns>
-    protected async Task<string> Saml2AuthenitcatedUserRedirection()
-    {
-        string navUrl  = ""; 
-        // gets the authenticate stub service
-        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
-        // gets the user name identifier from the authentication state provider
-        string userName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
-        string userData = userName; // TODO:        
-
-        EnablerLog.LogStatic("UserName  " + userName + " authenticated");
-
-        // Register userName
-        bool regOK = await Saml2SoapClient.RegisterSaml2UserAsync(userName, false);
-        // Alternativly you can call it with encrypted username
-        try {
-            if (!regOK)
-                regOK = await Saml2SoapClient.RegisterSaml2UserHttpAsync(userName.EnCrypt(), true);        
-        }
-        catch (Exception ex)
-        {
-            redirect = false;
-            exception = ex;
-        }
-
-        navUrl = SettingsKeyReader.FormsAuthenticationHttpsUrl + userName.EnCrypt();
-        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        string rawUrl = uri.ToString();
-        string urlSuffix = "";
-        if (rawUrl.IndexOf("?") > -1)
-        {
-            urlSuffix = rawUrl.Substring(rawUrl.IndexOf("?") + 1);
-            navUrl += "&" + urlSuffix;
-        }
-        if (redirect)
-        {
-            EnablerLog.LogStatic("Navigating to: " + navUrl);
-            NavigationManager.NavigateTo(navUrl, forceLoad: true);
-        }
-
-        return navUrl;
-    }
-
-
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {

@@ -40,7 +40,6 @@
     public string returnUrl = "", navigateUrl = "", rawUrl = "";
     public string visibility = "visible";
     public string userName = "", encryptedSam2lUser = "", userData = ""; // Where to get it? 
-    public string? formsAuthTicket = "";
     public bool redirect = true;
     public Exception? exception;
 
@@ -75,25 +74,7 @@
                 userName = user?.Identity?.Name ?? "";          
         }
 
-        encryptedSam2lUser = userName.EnCrypt();
-        EnablerLog.LogStatic("UserName  encrypted: " + encryptedSam2lUser);
-
-        bool regOK = await Saml2SoapClient.RegisterSaml2UserAsync(encryptedSam2lUser, true);
-
-        try {            
-            if (!regOK)
-                regOK = await Saml2SoapClient.RegisterSaml2UserHttpAsync(encryptedSam2lUser, true);
-        } 
-        catch (Exception ex)
-        {
-            exception = ex;            
-            redirect = false;
-        }
-
-        // Alternativly you call it with plain text username:
-        // bool regOK = await Saml2SoapClient.RegisterSaml2UserAsync(userName, false);
-
-        navigateUrl = SettingsKeyReader.FormsAuthenticationHttpsUrl +  encryptedSam2lUser;
+        navigateUrl = SettingsKeyReader.Saml2EnablerRedirectUrl + "?user=" + userName;
         if (rawUrl.IndexOf("?") > -1)
         {
             urlSuffix = rawUrl.Substring(rawUrl.IndexOf("?") + 1);

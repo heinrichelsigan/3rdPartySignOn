@@ -28,8 +28,6 @@
     Login User: <span style="font-family: monospace">@loginName</span>
     <br />
     Encrypted User: <label>@loginName.EnCrypt()</label>
-    <br />
-    Forms Auth Ticket: <label>@formsAuthTicket</label>
 </p>
 
 <div class="card">
@@ -72,10 +70,8 @@
         AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
 
         loginName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
-        formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(loginName, false);        
         // Alternativly you call it with plain text username:
-        // formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(loginName.EnCrypt(), false);
-        
+        // formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(loginName.EnCrypt(), false);        
         saml2User = await AuthenticateStub.GetSaml2UserInfoReduced(AuthenticationStateProvider);           
     }
 

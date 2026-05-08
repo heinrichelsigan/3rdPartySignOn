@@ -40,3 +40,41 @@ export function clearAllCookies() {
         document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.' + window.location.hostname;
     }
 }
+
+export function playSound(soundName) {
+	var dursec = 2500;
+	document.title = "Fruit Slot Machine";
+	let sound = new Audio(soundName);
+	sound.autoplay = true;
+	sound.loop = false;
+
+	setTimeout(function () {
+		try {
+			sound.play();
+		} catch (soundPlayEx) {
+			console.log("playSound(soundName = " + soundName + ") throwed exception: " + soundPlayEx);
+		}
+	}, 100);
+
+	setTimeout(function () {
+		sound.loop = false;
+		sound.pause();
+		sound.autoplay = false;
+		sound.currentTime = 0;
+		try {
+			sound.src = "";
+			sound = null;
+		} catch (exSnd) {
+		}
+		soundDuration = 2500;
+	}, dursec);
+}
+
+// playSoundUrl
+export function playSoundUrl(soundUrl, etext) {
+	if (soundUrl != null && soundUrl.length > 1) {
+		setTimeout(function () {
+			playSound(soundUrl)
+		}, 24000);
+	}
+}

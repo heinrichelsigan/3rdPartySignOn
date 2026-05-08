@@ -23,6 +23,9 @@
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Content Remove="Pages\Privacy - Copy.razor" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="log\README.MD" />
   </ItemGroup>  
   <ItemGroup>

@@ -38,7 +38,7 @@ namespace Saml2AuthGateway
             UriCreationOptions uriOpts = new UriCreationOptions() { DangerousDisablePathAndQueryCanonicalization = true };
 
             // EnablerLog.LogOriginMsg("Saml2AuthGateway", "program started!");
-
+          
             AuthenticationOptions authOptions = new AuthenticationOptions()
             {
                 DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme,
@@ -70,7 +70,7 @@ namespace Saml2AuthGateway
                     });
             })
             .AddCookie();
-            
+
        
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<HttpContextAccessor>();

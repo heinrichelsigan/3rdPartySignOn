@@ -147,15 +147,7 @@ namespace Saml2AuthGateway.Services
 
         #endregion Saml2 authentication and saml2 claims
 
-        #region ws proxy calls
-
-        [Obsolete("Method transfered to Saml2SoapClient.GetFormsTicket(string userName, bool isEncrypted = false)", false)]
-        public string GetFormsAuthenticationTicketForUser(string username)
-        {
-            return Saml2SoapClient.GetFormsTicket(username, false);
-        }
-
-        #endregion ws proxy calls
+        
     }
 
 }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.JSInterop;
+using Saml2AuthGateway.Pages;
+using Saml2AuthGateway.Services;
 
 namespace Saml2AuthGateway.Data
 {
@@ -10,6 +12,7 @@ namespace Saml2AuthGateway.Data
     {
         public Task SetValue(string key, string value, int? days = null);
         public Task<string> GetValue(string key, string def = "");
+        public Task PlaySound(string soundValue, string htext, int delay = 10);
     }
 
     /// <summary>
@@ -48,6 +51,43 @@ namespace Saml2AuthGateway.Data
         private async Task SetCookie(string value)
         {
             await JSRuntime.InvokeVoidAsync("eval", $"document.cookie = \"{value}\"");
+        }
+
+
+        public async Task PlaySound(string soundValue, string htext, int delay = 10)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", 
+                    "setTimeout(function() { " +
+                    "   document.getElementById('h2Run').innerText = '" + htext + "'; " + 
+                    "   let sound = new Audio('" + soundValue + "'); " + @"
+                        sound.autoplay = true; 
+                        sound.loop = false; 
+                        try { 
+                            sound.play();  
+                        } catch (soundPlayEx) {
+                           console.log('playSound(" + soundValue + ") throwed exception: ' + soundPlayEx); " + @"
+			            }
+                        setTimeout(function() {
+                            sound.loop = false; 
+                            sound.pause(); 
+                            sound.autoplay = false; 
+                            sound.currentTime = 0;
+                            try { 
+                                sound.src = """"; 
+                                sound = null; 
+                            } catch (exSnd) { 
+                            }
+                            soundDuration = 2500;
+                        }, 2500);" +
+                    "}, " + delay + "); "
+                );
+            }
+            catch (Exception ex)
+            {
+                EnablerLog.LogOriginMsgEx("ICookie.cs", "playSound(" + soundValue + ")", ex);
+            }                       
         }
 
         private async Task<string> GetCookie()

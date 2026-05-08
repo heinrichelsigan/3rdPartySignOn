@@ -92,3 +92,7 @@ nunit-*.xml
 /Saml/Properties/PublishProfiles/Saml_SelfContained_x64_release.pubxml.user
 /Saml/ThirdPartySignOn.Saml.csproj.user
 /Saml/Properties/PublishProfiles/Saml_SelfContained_x64_release.pubxml
+/Experimental/Saml2AuthGateway/.vs/Saml2AuthGateway
+/Experimental/Saml2AuthGateway/Properties/PublishProfiles/FolderProfile.pubxml.user
+*.user
+/Experimental/SamlAuthGateway/.vs

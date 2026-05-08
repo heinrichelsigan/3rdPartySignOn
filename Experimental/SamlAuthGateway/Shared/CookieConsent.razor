@@ -1,0 +1,102 @@
+﻿@using System.Security.Claims
+@using SamlAuthGateway.Data
+@using SamlAuthGateway.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Http.Features
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject IHttpContextAccessor Http
+@inject IJSRuntime JS
+@inject ICookie cookie
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IHttpContextAccessor Http
+@inject NavigationManager NavigationManager
+@inject AuthStub AuthenticateStub
+@inherits OwningComponentBase
+@implements IAsyncDisposable
+
+@if (showBanner)
+{
+    <div id="cookieConsent" class="alert alert-info alert-dismissible fade show"
+         role="alert">        
+        Please accept our <a href="privacy">privacy policy</a> 
+        <button type="button" @onclick="@(async () => await AcceptPolicy())" class="accept-policy close"
+                data-bs-dismiss="alert" aria-label="Close"
+                data-cookie-string="@cookieString">
+            Compliant
+        </button>
+        
+    </div>
+    <br />    
+}
+@if (!NoExc)
+{
+    <div style="color: red; border-block: padding: 2px; margin: 2px; solid; width: 800px">
+        <u>Exception:</u> @exception?.GetType()
+        <br />
+        @exception?.Message
+        <br />
+        @exception?.StackTrace?.ToString()
+    </div>
+}
+@code {
+    private ITrackingConsentFeature? consentFeature;
+    public AuthStub? Authenticate { get; set; }
+    public bool showBanner = true, NoExc = true;
+    private string? cookieString = "";
+    public Exception? exception;
+    private string navigateUrl = "";
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            consentFeature = Http.HttpContext?.Features.Get<ITrackingConsentFeature>();
+            cookieString = consentFeature?.CreateConsentCookie();
+            throw new ApplicationException("Demo Exception thrown for testing.");
+        }
+        catch (Exception e)
+        {
+            exception = e;
+            NoExc = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            showBanner = true;
+        }
+    }
+
+    protected async Task AcceptPolicy()
+    {
+        try
+        {
+            await cookie.SetValue("acceptPolicy", cookieString);        
+        } 
+        catch (Exception ex)
+        {
+            exception = ex;
+            NoExc = false;
+        }
+        showBanner = false;
+    }
+
+
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        try
+        {
+            showBanner = true;
+        }
+        catch (JSDisconnectedException jdisEx)
+        {
+            exception = jdisEx;
+            NoExc = false;
+        }
+    }
+}

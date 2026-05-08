@@ -1,0 +1,132 @@
+﻿@using System.Security.Claims
+@using Saml2AuthGateway.Data
+@using Saml2AuthGateway.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Http.Features
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject IHttpContextAccessor Http
+@inject IJSRuntime JS
+@inject ICookie cookie
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IHttpContextAccessor Http
+@inject NavigationManager NavigationManager
+@inject AuthenticateStub AuthenticateStub
+@inherits OwningComponentBase
+@implements IAsyncDisposable
+
+@if (showBanner)
+{
+    <div id="cookieConsent" class="alert alert-info alert-dismissible fade show"
+         role="alert">        
+        Please accept our <a href="privacy">privacy policy</a> 
+        <button type="button" @onclick="@(async () => await AcceptPolicy())" class="accept-policy close"
+                data-bs-dismiss="alert" aria-label="Close"
+                data-cookie-string="@cookieString">
+            Compliant
+        </button>
+        
+    </div>
+    <br />    
+}
+@if (!redirect)
+{
+    <div style="color: red; border-block: padding: 2px; margin: 2px; solid; width: 800px">
+        <u>Exception:</u> @exception?.GetType()
+        <br />
+        @exception?.Message
+        <br />
+        @exception?.StackTrace?.ToString()
+    </div>
+}
+@code {
+    private ITrackingConsentFeature? consentFeature;
+    public AuthenticateStub? Authenticate { get; set; }
+    public bool showBanner = true, redirect = true;
+    private string? cookieString = "";
+    public Exception? exception;
+    private string navigateUrl = "";
+
+    protected override void OnInitialized()
+    {        
+        consentFeature = Http.HttpContext?.Features.Get<ITrackingConsentFeature>();        
+        cookieString = consentFeature?.CreateConsentCookie();        
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            showBanner = true;
+        }
+    }
+
+    protected async Task AcceptPolicy()
+    {
+        await cookie.SetValue("acceptPolicy", cookieString);
+        navigateUrl = await Saml2AuthenitcatedUserRedirection();
+        showBanner = false;
+    }
+
+
+    /// <summary>
+    /// Saml2AuthenitcatedUserRedirection
+    /// executes or prepares redirection of a SAML2 authenticated user
+    /// </summary>
+    /// <returns>navigation url to redirect</returns>
+    protected async Task<string> Saml2AuthenitcatedUserRedirection()
+    {
+        string navUrl  = ""; 
+        // gets the authenticate stub service
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        // gets the user name identifier from the authentication state provider
+        string userName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        string userData = userName; // TODO:        
+
+        EnablerLog.LogStatic("UserName  " + userName + " authenticated");
+
+        // Register userName
+        bool regOK = await Saml2SoapClient.RegisterSaml2UserAsync(userName, false);
+        // Alternativly you can call it with encrypted username
+        try {
+            if (!regOK)
+                regOK = await Saml2SoapClient.RegisterSaml2UserHttpAsync(userName.EnCrypt(), true);        
+        }
+        catch (Exception ex)
+        {
+            redirect = false;
+            exception = ex;
+        }
+
+        navUrl = SettingsKeyReader.FormsAuthenticationHttpsUrl + userName.EnCrypt();
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        string rawUrl = uri.ToString();
+        string urlSuffix = "";
+        if (rawUrl.IndexOf("?") > -1)
+        {
+            urlSuffix = rawUrl.Substring(rawUrl.IndexOf("?") + 1);
+            navUrl += "&" + urlSuffix;
+        }
+        if (redirect)
+        {
+            EnablerLog.LogStatic("Navigating to: " + navUrl);
+            NavigationManager.NavigateTo(navUrl, forceLoad: true);
+        }
+
+        return navUrl;
+    }
+
+
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        try
+        {
+            showBanner = true;
+        }
+        catch (JSDisconnectedException)
+        {
+        }        
+    }
+}

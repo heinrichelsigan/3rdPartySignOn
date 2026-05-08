@@ -1,0 +1,82 @@
+﻿@page "/Claims"
+@using System.Security.Claims
+@using Saml2AuthGateway.Data
+@using Saml2AuthGateway.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inherits OwningComponentBase
+
+<PageTitle>UserClaims</PageTitle>
+<h1>UserClaims</h1>
+
+<h2>Saml2 UserInfo</h2>
+
+<p role="alertdialog" style="visibility: visible; display: block; padding: 2px; margin: 2px; border-block: dashed;">
+    NameIdentifier: <label>@saml2User.NameIdentifier</label>
+    <br />
+    SessionIndex: <span style="font-family: monospace">@saml2User.SessionIndex</span>
+    <br />
+    AuthenticationDate @saml2User.AuthenticationInstant    
+    <br />
+    AuthenticatioMethod: @saml2User.AuthenticatioMethod
+    <br />
+    LogoutNameIdentifier: @saml2User.LogoutNameIdentifier    
+    <br />
+    Login User: <span style="font-family: monospace">@loginName</span>
+    <br />
+    Encrypted User: <label>@loginName.EnCrypt()</label>
+    <br />
+    Forms Auth Ticket: <label>@formsAuthTicket</label>
+</p>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Saml2 Claims</h2>
+    </div>
+    <div class="card-body">
+        <table border="0" cellpadding="0" cellspacing="0">                    
+            @foreach (var claimsKey in saml2User.ClaimsDictionary.Keys)
+            {
+                <tr>
+                    <td>@claimsKey</td>
+                    <td>@saml2User.ClaimsDictionary[@claimsKey]</td>
+                </tr>
+            }            
+        </table>
+    </div>
+    
+</div>
+
+@code {
+    private AuthenticateStub? AuthenticateStub { get; set; }
+    public string loginName = "", formsAuthTicket = "";
+    public Saml2UserInfoReduced saml2User = new Saml2UserInfoReduced();
+
+    /// <summary>
+    /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
+    /// It is used to perform any asynchronous initialization tasks that are required for the component to function properly.
+    /// This method is called after the component has been instantiated and its parameters have been set,
+    /// but before the component is rendered for the first time.
+    ///
+    /// AuthenticateStub is used to get the login name identifier and the saml2 claims from the authentication state provider, which is injected into the component.
+    /// loginName is the login name identifier, which is encrypted with a simple reversible encryption method and stored in encryptedUser.
+    /// saml2User is a reduced version of the saml2 user info, which contains only the most important claims, and is stored in saml2User.
+    /// 
+    /// </summary>
+    /// <returns>void Task</returns>
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+
+        loginName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(loginName, false);        
+        // Alternativly you call it with plain text username:
+        // formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(loginName.EnCrypt(), false);
+        
+        saml2User = await AuthenticateStub.GetSaml2UserInfoReduced(AuthenticationStateProvider);           
+    }
+
+ }

@@ -1,0 +1,236 @@
+﻿@page "/Logout"
+@model Saml2AuthGateway.Pages.LogoutModel
+@{
+}
+
+<html>
+<head>
+    <title>Saml2 Logout</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta id="metaLogoutDirectUrl" http-equiv="content-type" content='@Model.LogoutDirectUrl' />
+    <meta id="metaCurrentUrl" http-equiv="content-type" content='@Model.CurrentUrl' />
+    <meta id="metaRequestCurrentPath" http-equiv="content-type" content='@Model.RequestCurrentPath' />
+    <meta id="metaUserName" http-equiv="content-type" content='@Model.UserName' />
+    <link href="~/css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+    <script language="javascript" charset="utf-8">
+
+            function deleteAllCookies() {
+                                            
+                 var urlLogoutString = document.getElementById("metaLogoutDirectUrl").content;
+                 var userNameString = document.getElementById("metaUserName").content;
+                 var currentUrlString = document.getElementById("metaCurrentUrl").content;
+                 var requestCurrentPathString = document.getElementById("metaRequestCurrentPath").content;
+                 const urlParams = new URLSearchParams(window.location.search);
+                 const lastLogout = urlParams.get('logout');
+                
+                 var upath = window.location.pathname;
+                 if (upath.includes("/Logout")) {
+                     upath = upath.replace("/Logout", "/");
+                     requestCurrentPathString = upath;
+                 }
+
+                 window.console.log("CurrentPath=" + requestCurrentPathString + " user=" + userNameString + " urlLogout=" + urlLogoutString + ";");
+                                            
+                 try {
+                     // var docCookie = document.cookie;
+                     var cookies = document.cookie.split(';');
+
+                     var cookieName = ".AspNetCore.Cookies";
+                     var cookieContent = "";
+                     var documentCookieValue =`${cookieName}={cookieContent}; path=` + requestCurrentPathString + `; domain=` + window.location.hostname + `; expires=${new Date(0).toUTCString()}`;
+            
+                     document.cookie = documentCookieValue;
+                     // Set expiry date to January 1, 1970 for all cookies
+                     for (var i = 0; i < cookies.length; i++) {
+
+                         var cookieNameValue = cookies[i];
+                         if (cookieNameValue != null && cookieNameValue.trim() != "") {
+                        
+                             cookieName = cookieNameValue.split('=')[0].trim(); // Get the cookie name
+                    
+                             if (cookieName != ".AspNetCore.Cookies") {
+                                 documentCookieValue = documentCookieValue + ";" + cookieName + "=; path=/; domain=" +  window.location.hostname +  ";expires=" + new Date(0).toUTCString(); // Clear cookie for current path
+                                 document.cookie = documentCookieValue;
+                             }
+                         }
+                     }
+                 } catch (ecook) {
+                     window.console.log("DOMException during delete cookies in javascript: " + ecook.toString());
+                 }
+                
+                 window.console.log("after cookies deleted...");
+
+                 var logoutButton = document.getElementById("signOutButton");
+                 if (logoutButton != null) {
+                    
+                     window.console.log("logoutButton != null");
+                     logoutButtonClick();
+                     // xhttpPost();
+                     
+                     postFormSubmit();
+                 }
+
+                 window.console.log("logoutButton section passed.");
+                 var redirectUrlString = urlLogoutString;
+
+                
+                 var loginButton = document.getElementById("signInButton");
+                 if (loginButton == null) {
+                     window.console.log("loginButton == null");
+
+                     const urlWindowLocation = new URL(currentUrlString);
+                     redirectUrlString = urlWindowLocation.toString() + "?logout=" + userNameString;
+                     if (urlWindowLocation.toString().indexOf("?") > -1) {
+                         var xyz = urlWindowLocation.toString().substring(0, urlWindowLocation.toString().indexOf("?"));
+                         if (xyz.includes("?"))
+                             redirectUrlString = xyz + "logout=" + userNameString;
+                         else
+                             redirectUrlString = xyz + "?logout=" + userNameString;
+                     }
+                  
+                     window.console.log("redirecting to: " + redirectUrlString);
+                     setTimeout(function () { redirectToLogout(redirectUrlString) }, 512);
+                 }
+                 // if ((loginButton != null && lastLogout != null && lastLogout.trim() != "" &&
+                 if ((lastLogout != null && lastLogout.trim() != "" &&
+                     (userNameString.trim() == "anonymous" || lastLogout.trim() == "anonymous"))) {
+                    
+                     redirectUrlString = urlLogoutString;
+                     window.console.log("redirecting to: " + redirectUrlString);
+                     setTimeout(function () { redirectToLogout(redirectUrlString) }, 1024);
+                 }
+                 // window.location.href = redirectUrlString;
+             }
+
+             function redirectToLogout(logoutUrl) {
+                 window.location.href = logoutUrl;
+             }
+
+             function postFormSubmit() {
+                 try {
+                     document.getElementById("signOutButton").focus();
+                     document.getElementById("formAction").submit();
+                 }
+                 catch (exSubmit) {
+                     window.console.log("DOMException submitting form: " + exSubmit.toString());
+                 }
+                 finally {
+                     window.console.log("postFormSubmit() finished.");
+                 }
+             }
+
+             function logoutButtonClick() {
+
+                 try {
+                     document.getElementById("signOutButton").focus();
+                     document.getElementById("signOutButton").click();
+                     document.getElementById("signOutButton").submit();
+                     // document.getElementById("signOutButton").processClick();
+                     // var buynowButton = document.getElementsByName("Action")[0];
+                     //buynowButton.click();
+                    
+                 } catch (exClick) {
+                     window.console.log("DOMException clickíng signOutButton: " + exClick.toString());
+                 }
+                 finally {
+                     window.console.log("logoutButtonClick() finished.");
+                 }
+             }
+
+             function xhttpPost() {
+                 try {
+                     xhttp.open("POST",  window.location.href, true);
+                     var formData = new FormData(  document.getElementById("signOutButton").value );
+                     xhttp.send(formData);
+                 } catch (exPost) {
+                     window.console.log("DOMException performing xhttp post request to " +
+                         window.location.href + " via button: " + document.getElementById("signOutButton").innerText +
+                         " with form data: " + formData.toString() + " Exception: " + exSubmit.toString());
+                 }
+                 finally {
+                     window.console.log("Finished xhttpPost().");
+                 }
+
+             }
+
+            document.onload  = deleteAllCookies();
+
+    </script>
+</head>
+<body>
+    <h1>Saml Logout</h1>
+    <div class="main">
+        <div class="content px-4">
+            @if (Model.IsAuthenticated)
+            {
+                <h2 class="text-primary">Authenticated as @Model.UserName</h2>
+            }
+            else
+            {
+                <h2 class="text-danger">Not Authenticated</h2>
+            }
+                            
+            <h3 class="text-secondary">Clearing @Model.Cookies.Length cookies in current domain.</h3>
+
+            <p>
+                <strong>RequestCurrentPath:</strong> <code>@Model.RequestCurrentPath</code>
+                <br />
+                <strong>RequestId:</strong> <code>@Model.RequestId</code>
+                <br />
+                <strong>CurrentUrl:</strong> <code>@Model.CurrentUrl</code>
+                <br />
+                <strong>LogoutDirectUrl:</strong> <code>@Model.LogoutDirectUrl</code>
+            </p>
+            <p>
+                @foreach (var cookie in Model.Cookies)
+                {
+                    <strong>Cookie:</strong> <code>@cookie</code>
+                    <br />
+                }
+            </p>
+            
+        </div>
+    </div>
+    <p>
+        Please note that this application is not meant as a starting point
+        for development of your own solution. It is a test host used during
+        development to test run the handler.
+    </p>
+    <form id="formAction" method="post">
+        @if (Model.IsAuthenticated)
+        {
+            <button name="Action" id="signOutButton" type="submit" value='SignOut'>Sign Out</button> <label>@Model.UserName</label>
+        }
+        else
+        {
+            <button name="Action" id="signInButton" type="submit" value="SignInStubIdp">Sign In with StubIdp</button>
+        }
+    </form>
+
+    <div class="d-inline-block">
+        @if (Model.IsAuthenticated)
+        {
+            <h3 class="text-success">Claims</h3>
+            <dl>
+                @foreach (var c in User.Claims)
+                {
+                    <dt>@c.Type</dt>
+                    <dd>@c.Value</dd>
+                }
+            </dl>
+        }
+        @if (Model.Items != null)
+        {
+            <h3 class="text-start">Properties</h3>
+            <dl>
+                @foreach (var i in Model.Items)
+                {
+                    <dt>@i.Key</dt>
+                    <dd>@i.Value</dd>
+                }
+            </dl>
+        }
+    </div>
+</body>
+</html>

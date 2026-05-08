@@ -1,0 +1,144 @@
+﻿@using System.Security.Claims
+@using Saml2AuthGateway.Data
+@using Saml2AuthGateway.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@using System.Reflection
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticateStub AuthenticateStub
+@inherits OwningComponentBase
+@page "/"
+
+<PageTitle>Saml2 Authgateway</PageTitle>
+
+<h1>Saml2 Authgateway</h1>
+
+Welcome to Saml2 Authgateway, 
+<br />
+click on <NavLink class="nav-fill" href="Claims">Claims</NavLink> to view your saml2 claims.
+<br />
+click on <NavLink class="nav-item" href="Privacy?Hallo=Gallo&mw=guy">Privacy</NavLink> to read privacy agreement.
+<br />
+click on <NavLink class="nav-pills" href="Auto">Auto</NavLink> redirect to enabler4BIZ.
+
+<br />
+
+<p role="alertdialog" style="visibility: @visibility_value; display: @display_value; padding: 2px; margin: 2px; border-block: dashed; width: 80%">
+    About @AssemblyTitle
+    <br />
+    Version @AssemblyVersion
+    <br />
+    &copy; @AssemblyCopyright
+    <br />
+    @AssemblyDescription    
+    <br />
+    UserName: <label>@userName</label>
+    <br />
+    Encrypted Saml2 User: <label>@encryptedSaml2User</label>
+    <br />
+    Forms Auth Ticket: <label>@formsAuthTicket</label>
+    <br />
+    NavigateUrl: <a href="@navigateUrl" target="_self">@navigateUrl</a>
+</p>
+<br />
+
+@code {
+    public AuthenticateStub? Authentication { get; set; }
+    public string returnUrl = "", navigateUrl = "", rawUrl = "";
+    public string visibility_value = "hidden", display_value = "none";
+    public string userName = "", encryptedSaml2User = "", formsAuthTicket = ""; // Where to get it?
+
+    /// <summary>
+    /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
+    /// It is used to perform any asynchronous initialization tasks that are required for the component to function properly.
+    /// This method is called after the component has been instantiated and its parameters have been set,
+    /// but before the component is rendered for the first time.
+    ///
+    /// rawUrl is the absolute url of the current page, including the query string.
+    /// AuthenticateStub is used to get the login name identifier and the saml2 claims from the authentication state provider, which is injected into the component.
+    /// userName is the login name identifier, which is encrypted with a simple reversible encryption method and stored in encryptedSam2lUser.
+    /// formsTicket is the forms authentication ticket, which is received via the saml2 soap client using the login name identifier.
+    /// 
+    /// </summary>
+    /// <returns>blank <see cref="Task"/></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        rawUrl = uri.ToString();
+        returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        navigateUrl = SettingsKeyReader.Saml2EnablerRedirectUrl;
+
+        userName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        encryptedSaml2User = (string.IsNullOrEmpty(userName)) ? "" : userName.EnCrypt();
+
+        formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(encryptedSaml2User, true);
+        // Alternativly you can call it:
+        if (string.IsNullOrEmpty(formsAuthTicket))
+        {
+            formsAuthTicket = await Saml2SoapClient.GetFormsTicketHttpAsync(userName, false);
+        }
+
+        visibility_value = "visible";
+        display_value = "block";                  
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {        
+        if (firstRender && string.IsNullOrEmpty(formsAuthTicket))
+        {
+            AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+            userName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+            formsAuthTicket = await Saml2SoapClient.GetFormsTicketHttpAsync(userName, false);
+
+            visibility_value = "visible";
+            display_value = "block";
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+   
+
+    #region Assembly Attribute Accessors
+
+    public string AssemblyTitle
+    {
+        get
+        {
+            object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false);
+            string assTitle = (attributes.Length > 0 && !string.IsNullOrEmpty(((AssemblyTitleAttribute)attributes[0]).Title)) ?
+                ((AssemblyTitleAttribute)attributes[0]).Title :
+                System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetAssembly(typeof(Index)).Location);
+            return assTitle;
+        }
+    }
+
+    public string AssemblyVersion { get => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0"; }
+
+    public string AssemblyDescription
+    {
+        get
+        {
+            object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyDescriptionAttribute), false);
+            return (attributes.Length == 0) ? "" : ((AssemblyDescriptionAttribute)attributes[0]).Description;
+        }
+    }
+
+    public string AssemblyCopyright
+    {
+        get
+        {
+            object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
+            return (attributes.Length == 0) ? "" : ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
+        }
+    }
+
+    #endregion
+
+}

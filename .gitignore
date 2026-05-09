@@ -96,3 +96,4 @@ nunit-*.xml
 /Experimental/Saml2AuthGateway/Properties/PublishProfiles/FolderProfile.pubxml.user
 *.user
 /Experimental/SamlAuthGateway/.vs
+/Experimental/Saml2AuthGateway/.vs/ProjectEvaluation

@@ -1,0 +1,98 @@
+﻿@page "/TestParam"
+@using System.Security.Claims
+@using Saml2AuthGateway.Data
+@using Saml2AuthGateway.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inherits OwningComponentBase
+
+<PageTitle>TestParam</PageTitle>
+<h1>TestParam</h1>
+
+<div>
+    <CBodyParams Title="Title Test" Body="@(new PanelBody() { Text="<h2>Set by parent.</h2>;" , Style="italic" })" Count="1" />    
+</div>
+<div>
+    @foreach (var widget in _components)
+    {
+        @widget
+    }
+</div>
+<ItemT Items="claims" Context="claim">
+    <StartContent>
+        <h2>Claims App</h2>
+        
+    </StartContent>
+    <ItemTemplate>
+        <table>
+        <tr>
+            <td>@claim.ClaimType</td>
+            <td>@claim.ClaimValue</td>
+        </tr>
+        </table>
+    </ItemTemplate>
+    <EndContent>
+        <hr />        
+    </EndContent>    
+</ItemT>
+
+@code {
+    private AuthenticateStub? AuthenticateStub { get; set; }
+    public string loginName = "", formsAuthTicket = "";
+    public Saml2UserInfoReduced saml2User = new Saml2UserInfoReduced();       
+    readonly List<RenderFragment> _components = new List<RenderFragment>
+    {
+        RenderWidgetA,
+        RenderWidgetB
+    };
+
+    static readonly RenderFragment RenderWidgetA = __builder =>
+    {
+        <h3>Widget A</h3>
+        <p>This is a widget</p>
+    };
+
+    static readonly RenderFragment RenderWidgetB = __builder =>
+    {
+        <h3>Widget B</h3>
+        <p>This is another widget</p>
+    };
+
+    internal List<Saml2ClaimReduced> claims
+    {
+        get
+        {
+            AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+            var claimsr = Task<List<Saml2ClaimReduced>>.Run(async () => await AuthenticateStub.GetAuthClaims(AuthenticationStateProvider)).GetAwaiter().GetResult();            
+            return claimsr;
+        }
+    }
+
+    /// <summary>
+    /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
+    /// It is used to perform any asynchronous initialization tasks that are required for the component to function properly.
+    /// This method is called after the component has been instantiated and its parameters have been set,
+    /// but before the component is rendered for the first time.
+    ///
+    /// AuthenticateStub is used to get the login name identifier and the saml2 claims from the authentication state provider, which is injected into the component.
+    /// loginName is the login name identifier, which is encrypted with a simple reversible encryption method and stored in encryptedUser.
+    /// saml2User is a reduced version of the saml2 user info, which contains only the most important claims, and is stored in saml2User.
+    /// 
+    /// </summary>
+    /// <returns>void Task</returns>
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+
+        loginName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        var claimss = await AuthenticateStub.GetAuthClaims(AuthenticationStateProvider);
+        // Alternativly you call it with plain text username:
+        // formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(loginName.EnCrypt(), false);
+        
+        saml2User = await AuthenticateStub.GetSaml2UserInfoReduced(AuthenticationStateProvider);           
+    }
+
+ }

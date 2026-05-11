@@ -64,10 +64,11 @@ namespace SamlAuthGateway
                     {
                         LoadMetadata = true,                        
                         MetadataLocation = saml2.IdentityProvider.MetadataLocation, // "https://stubidp.sustainsys.com/Metadata"
-                        AllowUnsolicitedAuthnResponse = true,
+                        AllowUnsolicitedAuthnResponse = true, 
+                       
                         SingleLogoutServiceResponseUrl = new Uri(saml2_logoutUrl, uriOpts), 
                         // SingleLogoutServiceUrl = new Uri(saml2_identityProvider_logoutUrl, uriOpts),                         
-                        SingleLogoutServiceBinding = Saml2BindingType.HttpRedirect                        
+                        SingleLogoutServiceBinding = Saml2BindingType.HttpPost                        
                     });
             })
             .AddCookie();

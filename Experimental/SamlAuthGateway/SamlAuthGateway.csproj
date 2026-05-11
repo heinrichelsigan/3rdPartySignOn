@@ -56,4 +56,5 @@
   <ItemGroup>
     <Folder Include="Connected Services\" />
   </ItemGroup>
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1development_1json__JsonSchema="https://www.schemastore.org/artifacthub-repo.json" /></VisualStudio></ProjectExtensions>
 </Project>

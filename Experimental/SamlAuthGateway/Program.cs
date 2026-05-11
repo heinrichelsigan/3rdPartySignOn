@@ -31,7 +31,7 @@ namespace SamlAuthGateway
                             Path.GetFileNameWithoutExtension(Environment.ProcessPath));
             AppName = (!string.IsNullOrEmpty(appName)) ? appName : procPath;
             string cookie_name = SettingsKeyReader.SamlCookie;
-            string domain_name = SettingsKeyReader.HostDomain;
+            string domain_name = SettingsKeyReader.HostDomain;            
             string saml2_logoutUrl = (!string.IsNullOrEmpty(saml2.LogoutLocation)) ?
                 saml2.LogoutLocation : saml2.IdentityProvider.LogoutUrl;
             if (string.IsNullOrEmpty(saml2_logoutUrl)) 

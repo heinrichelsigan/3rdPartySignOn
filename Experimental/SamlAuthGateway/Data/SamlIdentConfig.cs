@@ -36,6 +36,7 @@ namespace SamlAuthGateway.Data
 
         public SamlIdentConfig()
         {
+            this.EntityId = (new SettingsKeyReader()).GetKeySetting("Saml2:EntityId");
             this.LogoutLocation = "https://stubidp.sustainsys.com/Logout";
             this.IdentityProvider = new IdentProvider()
             {
@@ -50,7 +51,8 @@ namespace SamlAuthGateway.Data
             SamlIdentConfig? saml2Config = GetJsonSettingsSectionSaml2(configSection);
             if (saml2Config != null)
             {
-                this.EntityId = saml2Config.EntityId;
+                this.EntityId = string.IsNullOrEmpty(saml2Config.EntityId) ?
+                    (new SettingsKeyReader()).GetKeySetting("Saml2:EntityId") : saml2Config.EntityId;
                 this.LogoutLocation = saml2Config.LogoutLocation;
                 this.IdentityProvider = new IdentProvider()
                 {

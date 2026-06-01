@@ -33,6 +33,7 @@
     <Compile Remove="Pages\SignInOut.cshtml.cs" />
     <Compile Remove="Services\CookieStorageAccessor.cs" />
     <Compile Remove="Services\HttpClientRequest.cs" />
+    <Compile Remove="Services\SettingsKeyReader.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Pages\Logout.razor" />

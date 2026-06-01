@@ -1,16 +1,9 @@
-﻿
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SSO3rd.Library;
-using System.Configuration;
-using System.Security.Cryptography;
-using System.Text;
+using Saml2AuthGateway.Data;
 
-namespace SSO3rd.Library
+namespace Saml2AuthGateway.Services
 {
-
 
     /// <summary>
     /// appsettings.json key reader abstraction
@@ -21,6 +14,7 @@ namespace SSO3rd.Library
         #region static pre settings
 
         private static readonly Lock _lock = new Lock();
+
         private static string _baseAppPath = "";
         public static string BaseAppPath
         {
@@ -55,10 +49,10 @@ namespace SSO3rd.Library
                 string logFilePath = GetKeySetting("LogFilePath");
                 if (!logFilePath.EndsWith(Path.DirectorySeparatorChar))
                     logFilePath += Path.DirectorySeparatorChar.ToString();
-
+                
                 if (!Directory.Exists(logFilePath))
                     Directory.CreateDirectory(logFilePath);
-
+                
                 return logFilePath;
             }
         }
@@ -91,12 +85,30 @@ namespace SSO3rd.Library
             return returnValue ?? "";
         }
 
-
         /// <summary>
-        /// GetKeyValueJson 
+        /// Gets the saml2 section in appsettings.json
         /// </summary>
-        /// <param name="keyPath">JPath in jsonfile</param>
-        /// <returns>key value</returns>
+        /// <param name="configSection">config section name of saml2 section</param>
+        /// <returns><see cref="Saml2IdentConfig"/></returns>
+        public static Saml2IdentConfig? GetJsonSettingsSectionSaml2(string configSection)
+        {
+            Saml2IdentConfig? saml2IdentConf = null;
+            string configPath = Path.Combine(SettingsKeyReader.BaseAppPath, "appsettings.json");
+            if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
+            {
+                string jsonSerialized = File.ReadAllText(configPath);
+                if (!string.IsNullOrEmpty(jsonSerialized))
+                {
+                    string jsonConfigSection = configSection.Replace(":", ".");
+                    JObject? jobj = (JObject?)JsonConvert.DeserializeObject(jsonSerialized);
+                    JToken? jtok = (JToken?)jobj?.SelectToken(jsonConfigSection);
+                    string restTokenString = (jtok ?? "").ToString();
+                    saml2IdentConf = JsonConvert.DeserializeObject<Saml2IdentConfig>(restTokenString);
+                }
+            }
+            return saml2IdentConf;
+        }
+
         public static string GetKeyValueJson(string keyPath)
         {
             string jsonFile = Path.Combine(BaseAppPath, "appsettings.json");
@@ -117,20 +129,58 @@ namespace SSO3rd.Library
 
         #region appsettings.json fast key value mappings
 
-        public static string ApplicationName { get => GetKeySetting("ApplicationName"); }
-
-        public static string RedirectUrl { get => GetKeySetting("RedirectUrl"); }
-
-        public static string LogoutUrl { get => GetKeySetting("LogoutUrl"); }
-
         public static string DomainName { get => GetKeySetting("DomainName"); }
 
         public static string HostDomainName { get => GetKeySetting("ServerDomain"); }
-                
+
+        public static string FormsAuthenticationHttpsUrl { get => GetKeySetting("FormsAuthenticationHttpsUrl"); }        
+        public static string Saml2EnablerRedirectUrl { get => GetKeySetting("Saml2EnablerRedirectUrl"); }
+
+        public static string Saml2LogoutUrl { get => GetKeySetting("Saml2LogoutUrl"); }
+        
+        public static string ApplicationName { get => GetKeySetting("ApplicationName"); }
+
+        public static string Saml2AuthGWPath { get => GetKeySetting("Saml2AuthGWPath"); }
+       
+        public static string Saml2CookieName { get => GetKeySetting("Saml2CookieName"); }
+
+        public static string SamlSoapWebService { get => GetKeySetting("SamlSoapWebService"); }
+
+        public static string FormsAuthenticationHttpUrl {
+            get
+            {
+                string formsAuthenticationHttpUrl = "";
+                try
+                {
+                    formsAuthenticationHttpUrl = GetKeySetting("FormsAuthenticationHttpUrl");
+                }
+                catch (Exception)
+                {
+                    formsAuthenticationHttpUrl = string.Empty;
+                }
+                return formsAuthenticationHttpUrl;
+            }
+        }
+
+        public static string SamlSoapWebServiceHttp
+        {
+            get
+            {
+                string samlSoapWebServiceHttp = "";
+                try
+                {
+                    samlSoapWebServiceHttp = GetKeySetting("SamlSoapWebServiceHttp");
+                }
+                catch (Exception)
+                {
+                    samlSoapWebServiceHttp = string.Empty;
+                }
+                return samlSoapWebServiceHttp;
+            }
+        }
 
         #endregion appsettings.json fast key value mappings
 
     }
 
 }
-

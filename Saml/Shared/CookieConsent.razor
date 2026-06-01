@@ -1,0 +1,82 @@
+﻿@using System.Security.Claims
+@using ThirdPartySignOn.Saml.Data
+@using ThirdPartySignOn.Saml.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Http.Features
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject IHttpContextAccessor Http
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IHttpContextAccessor Http
+@inject NavigationManager NavigationManager
+@inject AuthenticateStub AuthenticateStub
+@inherits OwningComponentBase
+@implements IAsyncDisposable
+
+@if (showBanner)
+{
+    <div id="cookieConsent" class="alert alert-info alert-dismissible fade show"
+         role="alert">        
+        Please accept our <a href="privacy">privacy policy</a> 
+        <button type="button" @onclick="@(async () => await AcceptPolicy())" class="accept-policy close"
+                data-bs-dismiss="alert" aria-label="Close"
+                data-cookie-string="@cookieString">
+            Compliant
+        </button>
+        
+    </div>
+    <br />    
+}
+@if (!redirect)
+{
+    <div style="color: red; border-block: padding: 2px; margin: 2px; solid; width: 800px">
+        <u>Exception:</u> @exception?.GetType()
+        <br />
+        @exception?.Message
+        <br />
+        @exception?.StackTrace?.ToString()
+    </div>
+}
+@code {
+    private ITrackingConsentFeature? consentFeature;
+    public AuthenticateStub? Authenticate { get; set; }
+    public bool showBanner = true, redirect = true;
+    private string? cookieString = "";
+    public Exception? exception;
+    private string navigateUrl = "";
+
+    protected override void OnInitialized()
+    {        
+        consentFeature = Http.HttpContext?.Features.Get<ITrackingConsentFeature>();        
+        cookieString = consentFeature?.CreateConsentCookie();        
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            showBanner = true;
+        }
+    }
+
+    protected async Task AcceptPolicy()
+    {        
+        await JS.InvokeVoidAsync("eval", $"document.cookie = \"{cookieString}\"");
+        // navigateUrl = await Saml2AuthenitcatedUserRedirection();
+        showBanner = false;
+    }
+
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        try
+        {
+            showBanner = true;
+        }
+        catch (JSDisconnectedException)
+        {
+        }        
+    }
+}

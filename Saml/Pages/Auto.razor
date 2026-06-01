@@ -1,0 +1,93 @@
+﻿@using System.Security.Claims
+@using ThirdPartySignOn.Saml.Data
+@using ThirdPartySignOn.Saml.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticateStub AuthenticateStub
+@inject IHttpContextAccessor Http
+@inject IJSRuntime JS
+@inject ICookie cookie
+@inherits OwningComponentBase
+@page "/auto"
+
+<PageTitle>Auto</PageTitle>
+
+<h1>Auto</h1>
+
+<p role="alertdialog" style="visibility: @visibility; padding: 2px; margin: 2px; border-block: dashed;">
+    UserName; <label>@userName</label>
+    <br />
+    NavigateUrl: <a href="@navigateUrl" target="_self">@navigateUrl</a>
+    <br />  
+</p>
+@if (!redirect)
+{
+    <div style="color: red; border-block: padding: 2px; margin: 2px; solid; width: 800px">
+        <u>Exception:</u> @exception.GetType()
+        <br />
+        @exception?.Message
+        <br />
+        @exception?.StackTrace?.ToString()
+    </div>
+}
+
+@code {
+    public AuthenticateStub? Authentication { get; set; }
+    public string returnUrl = "", navigateUrl = "", rawUrl = "";
+    public string visibility = "visible";
+    public string userName = "", encryptedSam2lUser = "", userData = ""; // Where to get it? 
+    public bool redirect = true;
+    public Exception? exception;
+
+
+    /// <summary>
+    /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
+    /// It is used to perform any asynchronous initialization tasks that are required for the component to function properly. 
+    /// This method is called after the component has been instantiated and its parameters have been set, 
+    /// but before the component is rendered for the first time.
+    /// 
+    /// Redirects to enabler4BIZ with the SAML2 username in the query string, encrypted with a simple reversible encryption method.
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        string urlSuffix = "";
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        rawUrl = uri.ToString();
+        returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+
+        // gets the user name identifier from the authentication state provider
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        userName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        SamlLog.LogStatic("UserName  " + userName + " authenticated");
+        userData = userName; // TODO:
+        if (string.IsNullOrEmpty(userName))
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if ((user != null) && (user.Identity is not null) && (user?.Identity?.IsAuthenticated ?? false))
+                userName = user?.Identity?.Name ?? "";          
+        }
+
+        navigateUrl = Saml2SettingsKeyReader.Saml2EnablerRedirectUrl + "?user=" + userName;
+        if (rawUrl.IndexOf("?") > -1)
+        {
+            urlSuffix = rawUrl.Substring(rawUrl.IndexOf("?") + 1);
+            navigateUrl += "&" + urlSuffix;
+        }
+        if (redirect)
+        {
+            SamlLog.LogStatic("Navigating to: " + navigateUrl);
+            NavigationManager.NavigateTo(navigateUrl, forceLoad: true);
+        }
+
+    }
+
+
+    
+}

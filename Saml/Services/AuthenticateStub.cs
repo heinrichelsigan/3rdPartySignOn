@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
-using System.IdentityModel.Claims;
-using System.Security.Claims;
 using ThirdPartySignOn.Saml.Data;
+using System.Security.Claims;
 
 namespace ThirdPartySignOn.Saml.Services
 {
@@ -14,7 +13,30 @@ namespace ThirdPartySignOn.Saml.Services
 
         #region Saml authentication and saml claims
 
+        public List<Claim> claimsList = new List<Claim>();
         public string UserName = "";
+
+        /// <summary>
+        /// Authenticate the user and get the username from the name identifier claim. This method is intended for testing purposes only and should not be used in production.
+        /// </summary>
+        /// <param name="authStateProvider"></param>
+        /// <returns>Auth status message</returns>
+        public async Task<string> Authenticate(AuthenticationStateProvider authStateProvider)
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                UserName = await GetLoginNameIdentifier(authStateProvider);
+                return $"{UserName} is authenticated.";
+            }
+            else
+            {
+                return "The user is NOT authenticated.";
+            }
+        }
+
 
         /// <summary>
         /// GetLoginNameIdentifier gets the username from the name identifier claim. This method is intended for testing purposes only and should not be used in production.
@@ -24,73 +46,104 @@ namespace ThirdPartySignOn.Saml.Services
         public async Task<string> GetLoginNameIdentifier(AuthenticationStateProvider authStateProvider)
         {
             var authState = await authStateProvider.GetAuthenticationStateAsync();
-            UserName = "";
-            var user = authState.User;            
+            var user = authState.User;
 
             if (user.Identity is not null && user.Identity.IsAuthenticated)
             {
-                UserName = user.Identity.Name ?? "";
-                foreach (var sclaim in ((ClaimsIdentity)user.Identity).Claims)
+                foreach (Claim claim in ((ClaimsIdentity)user.Identity).Claims)
                 {
-                    if (sclaim.Type.Contains("nameidentifier"))
+                    if (claim.Type.Contains("nameidentifier"))
                     {
-                        UserName = sclaim.Value;
+                        UserName = claim.Value;
                         break;
                     }
                 }
+                return UserName;
             }
+            return "Not Authenticated";
+        }
 
-            return UserName;
+        /// <summary>
+        /// GetAuthClaims
+        /// </summary>
+        /// <param name="authStateProvider"></param>
+        /// <returns><see cref="Task{List{Claim}}"/></returns>
+        public async Task<List<Claim>> GetAuthClaims(AuthenticationStateProvider authStateProvider)
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                if (claimsList == null || claimsList.Count == 0)
+                    claimsList = new List<Claim>();
+                else
+                    claimsList.Clear();
+
+                foreach (Claim claim in ((ClaimsIdentity)user.Identity).Claims)
+                {
+                    if (claim.Type.Contains("nameidentifier"))
+                        UserName = claim.Value;
+
+                    claimsList.Add(claim);
+                }
+                return claimsList;
+            }
+            else
+            {
+                return new List<Claim>();
+            }
         }
 
         /// <summary>
         /// GetSaml2UserInfoReduced
         /// </summary>
         /// <param name="authStateProvider"></param>
-        /// <returns><see cref="Task{SamlUserInfoReduced}"/></returns>
-        public async Task<SamlUserInfo> GetSamlUserInfoReduced(AuthenticationStateProvider authStateProvider)
+        /// <returns><see cref="Task{Saml2UserInfoReduced}"/></returns>
+        public async Task<SamlUserInfoReduced> GetSamlUserInfoReduced(AuthenticationStateProvider authStateProvider)
         {
-            SamlUserInfo saml2User = new SamlUserInfo();
+            SamlUserInfoReduced samlUser = new SamlUserInfoReduced();
             var authState = await authStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             if (user.Identity is not null && user.Identity.IsAuthenticated)
             {
-                if (saml2User.ClaimsDictionary == null)
-                    saml2User.ClaimsDictionary = new Dictionary<string, string>();
+                if (samlUser.ClaimsDictionary == null)
+                    samlUser.ClaimsDictionary = new Dictionary<string, string>();
                 else
-                    saml2User.ClaimsDictionary.Clear();
+                    samlUser.ClaimsDictionary.Clear();
 
-                foreach (var sclaim in ((ClaimsIdentity)user.Identity).Claims)
+                foreach (Claim claim in ((ClaimsIdentity)user.Identity).Claims)
                 {
-                    if (sclaim == null)
+                    if (claim == null)
                         continue;
 
-                    if (saml2User.ClaimsDictionary.ContainsKey(sclaim.Type))
-                        saml2User.ClaimsDictionary[sclaim.Type] = sclaim.Value;
-                    else 
-                        saml2User.ClaimsDictionary.Add(sclaim.Type, sclaim.Value); // add claim type / value to dictionary
+                    if (samlUser.ClaimsDictionary.ContainsKey(claim.Type))
+                        samlUser.ClaimsDictionary[claim.Type] = claim.Value; // set claim value to existing claim type
+                    else
+                        samlUser.ClaimsDictionary.Add(claim.Type, claim.Value); // add claim type / value to dictionary
 
-                    if (sclaim.Type.Contains("nameidentifier")) // get name identifier claim value
-                        saml2User.NameIdentifier = sclaim.Value;
-                    if (sclaim.Type.Contains("authenticationmethod")) // get authentication method claim value
-                        saml2User.AuthenticatioMethod = sclaim.Value;
-                    if (sclaim.Type.Contains("authenticationinstant")) // get authentication instant claim value
+                    if (claim.Type.Contains("nameidentifier")) // get name identifier claim value
+                        samlUser.NameIdentifier = claim.Value;
+                    if (claim.Type.Contains("authenticationmethod")) // get authentication method claim value
+                        samlUser.AuthenticatioMethod = claim.Value;
+                    if (claim.Type.Contains("authenticationinstant")) // get authentication instant claim value
                     {
                         DateTime parsedDate = DateTime.Now.AddDays(-1);
-                        if (DateTime.TryParse(sclaim.Value, out parsedDate))
-                            saml2User.AuthenticationInstant = parsedDate;
+                        if (DateTime.TryParse(claim.Value, out parsedDate))
+                            samlUser.AuthenticationInstant = parsedDate;
                     }
-                    if (sclaim.Type.Contains("LogoutNameIdentifier")) // get logout name identifier claim value
-                        saml2User.LogoutNameIdentifier = sclaim.Value;
-                    if (sclaim.Type.Contains("SessionIndex"))  // get session index claim value
-                        saml2User.SessionIndex = Int32.Parse(sclaim.Value);
+                    if (claim.Type.Contains("LogoutNameIdentifier")) // get logout name identifier claim value
+                        samlUser.LogoutNameIdentifier = claim.Value;
+                    if (claim.Type.Contains("SessionIndex"))  // get session index claim value
+                        samlUser.SessionIndex = Int32.Parse(claim.Value);
                 }
             }
 
-            return saml2User;
+            return samlUser;
         }
 
-        #endregion Saml2 authentication and saml2 claims
+        #endregion Saml authentication and saml claims
+
 
     }
 

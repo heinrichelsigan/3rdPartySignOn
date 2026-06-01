@@ -8,8 +8,8 @@
     <WebProject_DirectoryAccessLevelKey>0</WebProject_DirectoryAccessLevelKey>
     <StartupObject>ThirdPartySignOn.Google.Program</StartupObject>
     <RepositoryUrl>https://github.com/heinrichelsigan/3rdPartySignOn/</RepositoryUrl>
-    <AssemblyVersion>2.25.506</AssemblyVersion>
-    <FileVersion>2.25.506</FileVersion>
+    <AssemblyVersion>2.26.601</AssemblyVersion>
+    <FileVersion>2.26.601</FileVersion>
     <PackageProjectUrl>https://test.cqrxs.eu/SingleSignOn/Google</PackageProjectUrl>
     <Description>https://test.cqrxs.eu/SingleSignOn/Google
 https://test.area23.at/ThirdPartySignOn/Google/</Description>

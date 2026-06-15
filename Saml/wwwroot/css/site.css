@@ -66,3 +66,12 @@ a, .btn-link {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
+
+.drag-drop-area {
+    cursor: pointer;
+    display: block;
+    width: 800px;
+    height: 400px;
+    border: 1px dashed black;
+    position: relative; /* Essential for positioning the InputFile inside */
+}

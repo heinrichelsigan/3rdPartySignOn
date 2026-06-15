@@ -1,0 +1,118 @@
+﻿@page "/Files"
+@using System.Security.Claims
+@using ThirdPartySignOn.Saml.Data
+@using ThirdPartySignOn.Saml.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inherits OwningComponentBase
+
+<PageTitle>Files</PageTitle>
+<h1>Files</h1>
+
+<div>
+    <InputFile class="drag-drop-area" OnChange="HandleFileSelection">
+        <p>Drag and drop files here, or click to select.</p>
+    </InputFile>
+</div>
+
+@foreach (FileInfo fileInfo in uploadedFiles)
+{
+    <div class="card">
+        <p>
+            File Name: @fileInfo.Name
+            <br />
+            Fíle Ext:  @Path.GetExtension(fileInfo.FullName)
+            <br />
+            File Size: @fileInfo.Length bytes
+        </p>        
+    </div>
+}
+
+
+@code {
+    private AuthenticateStub? AuthenticateStub { get; set; }
+    public string loginName = "", formsAuthTicket = "";
+    public SamlUserInfoReduced samlUser = new SamlUserInfoReduced();
+    public List<FileInfo> uploadedFiles = new List<FileInfo>();
+
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        if (e != null && e.FileCount > 0)
+        {
+            if (e.FileCount > 1)
+            {
+                var files = e.GetMultipleFiles(64);
+                foreach (var file in files)
+                {
+                    await LoadFileContent(file);
+                }
+            }
+            else 
+                await LoadFileContent(e.File);
+        } 
+
+    }
+
+
+    internal async Task LoadFileContent(IBrowserFile file)
+    {
+        try
+        {
+            using (var memoryStream = new MemoryStream()) 
+            {
+                await file.OpenReadStream().CopyToAsync(memoryStream);
+                byte[] smallFileByteArray = memoryStream.ToArray();
+            
+                string fileName = file.Name ?? Guid.NewGuid().ToString() + ".bin";
+                string fileFullPath = Path.Combine(Saml2SettingsKeyReader.FilesUploadPath, fileName);
+                File.WriteAllBytes(fileFullPath, smallFileByteArray);
+                uploadedFiles.Add(new FileInfo(fileFullPath));
+            }            
+            // Do something with the file content, e.g., display it or process it
+            Console.WriteLine($"File Name: {file.Name}");
+            Console.WriteLine($"File Size: {file.Size} bytes");            
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading file: {ex.Message}");
+        }
+    }
+
+    internal List<Claim> claims
+    {
+        get
+        {
+            AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+            var claimsr = Task<List<System.Security.Claims.Claim>>.Run(async () => await AuthenticateStub.GetAuthClaims(AuthenticationStateProvider)).GetAwaiter().GetResult();
+            return claimsr;
+        }
+    }
+
+    /// <summary>
+    /// OnInitializedAsync is always called im early blazor component lifecycle, before the component is rendered.
+    /// It is used to perform any asynchronous initialization tasks that are required for the component to function properly.
+    /// This method is called after the component has been instantiated and its parameters have been set,
+    /// but before the component is rendered for the first time.
+    ///
+    /// AuthenticateStub is used to get the login name identifier and the saml2 claims from the authentication state provider, which is injected into the component.
+    /// loginName is the login name identifier, which is encrypted with a simple reversible encryption method and stored in encryptedUser.
+    /// saml2User is a reduced version of the saml2 user info, which contains only the most important claims, and is stored in saml2User.
+    ///
+    /// </summary>
+    /// <returns>void Task</returns>
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticateStub = ScopedServices.GetRequiredService<AuthenticateStub>();
+        uploadedFiles = new List<FileInfo>();
+        loginName = await AuthenticateStub.GetLoginNameIdentifier(AuthenticationStateProvider);
+        var claimss = await AuthenticateStub.GetAuthClaims(AuthenticationStateProvider);
+        // Alternativly you call it with plain text username:
+        // formsAuthTicket = await Saml2SoapClient.GetFormsTicketAsync(loginName.EnCrypt(), false);
+
+        samlUser = await AuthenticateStub.GetSamlUserInfoReduced(AuthenticationStateProvider);
+    }
+}

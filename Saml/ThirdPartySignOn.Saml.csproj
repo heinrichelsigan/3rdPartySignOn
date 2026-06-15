@@ -74,4 +74,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SSO3rd.Library\SSO3rd.Library.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\files\" />
+  </ItemGroup>
 </Project>

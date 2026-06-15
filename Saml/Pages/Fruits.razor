@@ -15,19 +15,19 @@
 	</tr>
 	<tr height="360px">
 		<td width="120px">
-			<img id="fruitSlot0" src="@fruit0" width="120px" border="0" />
+			<img id="fruitSlot0" src="img/@fruit0" width="120px" border="0" />
 		</td>
 		<td width="120px">
-			<img id="fruitSlot1" src="@fruit1" width="120px" border="0" />
+			<img id="fruitSlot1" src="img/@fruit1" width="120px" border="0" />
 		</td>
 		<td width="120px">
-			<img id="fruitSlot2" src="@fruit2" width="120px" border="0" />
+			<img id="fruitSlot2" src="img/@fruit2" width="120px" border="0" />
 		</td>
 		<td width="120px">
-			<img id="fruitSlot3" src="@fruit3" width="120px" border="0" />
+			<img id="fruitSlot3" src="img/@fruit3" width="120px" border="0" />
 		</td>
 		<td width="180px">
-			<img id="machineTurn" src="@machine" width="180px" border="0" 
+			<img id="machineTurn" src="img/@machine" width="180px" border="0" 
 				 @onclick="@(async () => await FruitSlotMachineStart())" />
 		</td>
 	</tr>
@@ -173,13 +173,13 @@
 			await JS.InvokeVoidAsync("eval",
 				"setTimeout(function() { " +
 				"   document.getElementById('h2Run').innerText = '" + htext + "'; " +
-				"   let sound = new Audio('" + soundName + "'); " + @"
+				"   let sound = new Audio('sound/" + soundName + "'); " + @"
                         sound.autoplay = true;
                         sound.loop = false;
                         try {
                             sound.play();
                         } catch (soundPlayEx) {
-                           console.log('playSound(" + soundName + ") throwed exception: ' + soundPlayEx); " + @"
+                           console.log('playSound(sound/" + soundName + ") throwed exception: ' + soundPlayEx); " + @"
 			            }
                         setTimeout(function() {
                             sound.loop = false;

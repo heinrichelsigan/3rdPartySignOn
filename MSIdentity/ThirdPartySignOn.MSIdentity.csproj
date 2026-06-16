@@ -8,8 +8,8 @@
     <WebProject_DirectoryAccessLevelKey>0</WebProject_DirectoryAccessLevelKey>
     <StartupObject>ThirdPartySignOn.MSIdentity.Program</StartupObject>
     <RepositoryUrl>https://github.com/heinrichelsigan/3rdPartySignOn/</RepositoryUrl>
-    <AssemblyVersion>2.26.601</AssemblyVersion>
-    <FileVersion>2.26.601</FileVersion>
+    <AssemblyVersion>2.26.616</AssemblyVersion>
+    <FileVersion>2.26.616</FileVersion>
     <PackageProjectUrl>https://test.cqrxs.eu/SingleSignOn/Saml</PackageProjectUrl>
     <Description>https://test.cqrxs.eu/SingleSignOn/Saml
 https://test.area23.at/ThirdPartySignOn/MSIdentity/</Description>

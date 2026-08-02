@@ -58,6 +58,10 @@ nunit-*.xml
 
 # User config files
 /.vs
+/Publish/
+/Publish/linux/
+/Publish/linux/Saml
+/Publish/Windows-IIS/
 /Saml/.vs
 /Saml/.vs/ThirdPartySignOn.Saml/
 /Saml/.vs/ProjectEvaluation

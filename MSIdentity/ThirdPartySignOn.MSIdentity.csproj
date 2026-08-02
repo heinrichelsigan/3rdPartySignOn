@@ -52,6 +52,7 @@ https://test.area23.at/ThirdPartySignOn/MSIdentity/</Description>
     <PackageReference Include="Microsoft.Identity.Web" Version="4.9.0" />
     <PackageReference Include="Microsoft.Identity.Web.UI" Version="4.9.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="System.Resources.Extensions" Version="11.0.0-preview.6.26359.118" />
   </ItemGroup>
 
   <ItemGroup>

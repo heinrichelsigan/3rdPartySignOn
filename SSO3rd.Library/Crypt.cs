@@ -1,4 +1,5 @@
-﻿
+﻿#define  STATIC_KEYS
+
 using SSO3rd.Library;
 using System.Configuration;
 using System.Security.Cryptography;

@@ -14,7 +14,6 @@ collection of 3rd party (single) sign on authentication implementations (C# .Net
 ## AzureAd with OpenId
 
 - test azureAD: heinrichelsiganlive355.onmicrosoft.com
-- try online: https://test.cqrxs.eu/SingleSignOn/MSIdentity/
 - with credentials
 ```
 user: guest@heinrichelsiganlive355.onmicrosoft.com

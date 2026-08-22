@@ -7,7 +7,6 @@ collection of 3rd party (single) sign on authentication implementations (C# .Net
 
 - saml2 provider: https://sustainsys.com/
 - sustainsys git: https://github.com/Sustainsys/Saml2
-- try online: https://test.cqrxs.eu/SingleSignOn/Saml
 
 <img width="1024" alt="https://test.cqrxs.eu/SingleSignOn/Saml" src="https://github.com/user-attachments/assets/b09d8ff1-5bc9-4efe-b4cb-3ff00cb705cb" />
 
